@@ -9,28 +9,24 @@ chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
   if (!port) return;
   const parentTabId = tab.id;
   const notify = Comlink.wrap(port);
-  let target,
-    listener,
-    eventListeners = {};
-  function checkInitialized() {
-    if (!target) throw new Error('Session is not initialized');
-  }
+  const index = {};
   const api = {
     async open(url = 'about:blank', version = '1.3') {
       // await notify('newTarget', url);
       const tab = await chrome.tabs.create({
         url
       });
-      target = { tabId: tab.id };
+      const target = { tabId: tab.id };
+      const targetInfo = (index[target.tabId] = { listeners: {} });
       await chrome.debugger.attach(target, version);
-      listener = (source, method, params) => {
+      targetInfo.handler = (source, method, params) => {
         if (source.tabId !== target.tabId) return;
-        notify(method, params);
-        const listeners = eventListeners[method] || [];
-        delete eventListeners[method];
-        listeners.forEach(({ resolve }) => resolve({ method, params }));
+        notify(target, method, params);
+        const list = targetInfo.listeners[method] || [];
+        delete targetInfo.listeners[method];
+        list.forEach(({ resolve }) => resolve({ method, params }));
       };
-      chrome.debugger.onEvent.addListener(listener);
+      chrome.debugger.onEvent.addListener(targetInfo.handler);
       // await chrome.tabs.update(parentTabId, {
       //   active: true,
       //   highlighted: true
@@ -38,37 +34,44 @@ chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
       return target;
     },
 
-    async until(event) {
+    async until(target, event) {
       return new Promise((resolve, reject) => {
-        const listeners = (eventListeners[event] = eventListeners[event] || []);
-        listeners.push({
-          resolve,
-          reject
-        });
+        const targetInfo = index[target.tabId];
+        if (!targetInfo) {
+          reject({ message: 'Target not found' });
+        } else {
+          const list = (targetInfo.listeners[event] =
+            targetInfo.listeners[event] || []);
+          list.push({
+            resolve,
+            reject
+          });
+        }
       });
     },
 
-    async send(method, commandParams) {
-      checkInitialized();
+    async send(target, method, commandParams) {
       // await notify('sendCommand', target, method, commandParams);
       return await chrome.debugger.sendCommand(target, method, commandParams);
     },
 
-    async close() {
-      checkInitialized();
-      for (const [method, listeners] of Object.entries(eventListeners)) {
-        listeners.forEach(({ reject }) =>
-          reject({
-            type: 'error',
-            method,
-            error: 'Session closed'
-          })
-        );
+    async close(target) {
+      const targetInfo = index[target.tabId];
+      delete index[target.tabId];
+      if (targetInfo) {
+        for (const [method, list] of Object.entries(targetInfo.listeners)) {
+          list.forEach(({ reject }) =>
+            reject({
+              type: 'error',
+              method,
+              error: 'Session closed'
+            })
+          );
+        }
+        chrome.debugger.onEvent.removeListener(targetInfo.handler);
+        await chrome.debugger.detach(target);
+        await chrome.tabs.remove(target.tabId);
       }
-      chrome.debugger.onEvent.removeListener(listener);
-      await chrome.debugger.detach(target);
-      await chrome.tabs.remove(target.tabId);
-      target = null;
       await chrome.tabs.update(parentTabId, {
         active: true,
         highlighted: true
