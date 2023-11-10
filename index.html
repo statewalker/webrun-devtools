@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Titre de la page</title>
+    <style>
+      main {
+        margin: auto;
+        max-width: 1000px;
+      }
+      #screenshots {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1em;
+      }
+      #screenshots .screenshot {
+        width: 100%;
+        border: 1px solid gray;
+      }
+
+      #screenshots .label {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Screen-Shooter</h1>
+      <p>This page automatically creates screenshots of external sites.</p>
+
+      <div id="screenshots"></div>
+    </main>
+    <script type="module">
+      import { establishPageToExtensionConnection } from "./establishPageToExtensionConnection.js";
+      import * as Comlink from 'https://unpkg.com/comlink/dist/esm/comlink.mjs';
+
+      Promise.resolve().then(main).catch(console.error);
+      async function main() {
+        const port = await establishPageToExtensionConnection();        
+        Comlink.expose((event, ...data) => {
+            console.log('A message from the extension', event, data);
+        }, port);
+        
+        const api = Comlink.wrap(port);
+        // const result = await api.foobar(123, { message: "second" }, { id : 567, x: { y : { z : "third" } } });
+        // console.log('XXX', result);
+        const target = await api.open();
+        console.log('Start session', target);
+
+        const urls = [
+          'https://webdriver.io/',
+          'https://svelte.dev/',
+          'https://astro.build',
+          'https://react.dev/',
+          'https://www.solidjs.com/',
+          'https://vuejs.org/'
+        ];
+
+        // enable events for Page domain  
+        await api.send("Page.enable");
+        for (let url of urls) {
+          await api.send("Page.navigate", { url });
+          await api.until("Page.loadEventFired");
+          await new Promise(resolve => setTimeout(resolve, 1 * 300));
+
+          // const { data } = await api.send("Page.printToPDF");
+          const { data } = await api.send("Page.captureScreenshot", { format: 'png' });
+
+          const div = document.createElement('div');
+          document.querySelector("#screenshots").appendChild(div);
+
+          const img = document.createElement('img');
+          img.src = `data:image/png;base64,${data}`;
+          img.className = 'screenshot';
+          div.appendChild(img);
+          const label = document.createElement('div');
+          label.className = 'label';
+          div.appendChild(label);
+
+          const ref = document.createElement('a');
+          ref.href = url;
+          ref.target = '_blank';
+          ref.className = 'label';
+          ref.innerText = url;  
+          label.appendChild(ref);
+
+        }
+
+        // const { data } = await page.send("Page.printToPDF");
+        // console.log('>>', data);
+        // await new Promise(resolve => setTimeout(resolve, 5 * 1000));
+
+        // attempt graceful close
+        await api.close();
+      }
+
+    </script>
+  </body>
+</html>
