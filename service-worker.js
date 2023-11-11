@@ -1,109 +1,115 @@
 import * as Comlink from './comlink.js';
-import { establishExtensionToPageConnection } from './establishExtensionToPageConnection.js';
+import {
+  connectExtensionToPage,
+  newConnectionHandler
+} from './connectExtensionToPage.js';
+import newRegistry from './newRegistry.js';
 
-// chrome.action.onClicked.addListener(async (tab) => {});
-
-chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
-  if (changeInfo.status !== 'complete') return;
-  const port = await establishExtensionToPageConnection(tab.id);
-  if (!port) return;
-  const parentTabId = tab.id;
-  const notify = Comlink.wrap(port);
-  const index = {};
-  const api = {
-    async open(url = 'about:blank', version = '1.3') {
-      // await notify('newTarget', url);
-      const tab = await chrome.tabs.create({
-        url
+function newTabsListeners() {
+  const tabs = {};
+  const [register, cleanup] = newRegistry();
+  return {
+    on(tabId, method, listener) {
+      const methods = (tabs[tabId] = tabs[tabId] || {});
+      const list = (methods[method] = methods[method] || []);
+      list.push(listener);
+      return register(() => {
+        const index = list.indexOf(listener);
+        if (index !== -1) list.splice(index, 1);
+        if (list.length === 0) {
+          delete methods[method];
+          if (Object.keys(methods).length === 0) {
+            delete tabs[tabId];
+          }
+        }
       });
+    },
+    once(tabId, method, listener) {
+      const cleanup = this.on(tabId, method, (...args) => {
+        cleanup();
+        listener(...args);
+      });
+      return cleanup;
+    },
+    notify(tabId, method, params) {
+      const methods = tabs[tabId];
+      if (!methods) return;
+      const list = methods[method];
+      if (!list) return;
+      list.forEach((listener) => listener(params));
+    },
+    close: cleanup
+  };
+}
+
+function newApi() {
+  const [register, cleanup] = newRegistry();
+  const listeners = newTabsListeners();
+  register(listeners.close);
+
+  function handler(source, method, params) {
+    listeners.notify(source.tabId, method, params);
+  }
+  chrome.debugger.onEvent.addListener(handler);
+  register(() => chrome.debugger.onEvent.removeListener(handler));
+
+  return {
+    async open(url = 'about:blank', version = '1.3') {
+      const tab = await chrome.tabs.create({ url });
       const target = { tabId: tab.id };
-      const targetInfo = (index[target.tabId] = { listeners: {} });
       await chrome.debugger.attach(target, version);
-      targetInfo.handler = (source, method, params) => {
-        if (source.tabId !== target.tabId) return;
-        notify(target, method, params);
-        const list = targetInfo.listeners[method] || [];
-        delete targetInfo.listeners[method];
-        list.forEach(({ resolve }) => resolve({ method, params }));
-      };
-      chrome.debugger.onEvent.addListener(targetInfo.handler);
-      // await chrome.tabs.update(parentTabId, {
-      //   active: true,
-      //   highlighted: true
-      // });
       return target;
     },
 
     async until(target, event) {
-      return new Promise((resolve, reject) => {
-        const targetInfo = index[target.tabId];
-        if (!targetInfo) {
-          reject({ message: 'Target not found' });
-        } else {
-          const list = (targetInfo.listeners[event] =
-            targetInfo.listeners[event] || []);
-          list.push({
-            resolve,
-            reject
-          });
-        }
+      return new Promise((resolve) => {
+        listeners.once(target.tabId, event, resolve);
       });
     },
 
     async send(target, method, commandParams) {
-      // await notify('sendCommand', target, method, commandParams);
       return await chrome.debugger.sendCommand(target, method, commandParams);
     },
 
     async close(target) {
-      const targetInfo = index[target.tabId];
-      delete index[target.tabId];
-      if (targetInfo) {
-        for (const [method, list] of Object.entries(targetInfo.listeners)) {
-          list.forEach(({ reject }) =>
-            reject({
-              type: 'error',
-              method,
-              error: 'Session closed'
-            })
-          );
-        }
-        chrome.debugger.onEvent.removeListener(targetInfo.handler);
-        await chrome.debugger.detach(target);
-        await chrome.tabs.remove(target.tabId);
-      }
-      await chrome.tabs.update(parentTabId, {
-        active: true,
-        highlighted: true
-      });
-    }
+      await chrome.debugger.detach(target);
+      await chrome.tabs.remove(target.tabId);
+    },
 
-    // async newSession(url = 'about:blank', version = '1.3') {
-    //   await notify('newTarget', url);
-    //   const tab = await chrome.tabs.create({
-    //     url
-    //   });
-    //   await chrome.debugger.attach({ tabId: tab.id }, version);
-    //   return { tabId: tab.id };
-    // },
-    // async attach(target, version = '1.3') {
-    //   await notify('attach', target, version);
-    //   return await chrome.debugger.attach(target, version);
-    // },
-    // async detach(target) {
-    //   await notify('detach', target);
-    //   return await chrome.debugger.detach(target);
-    // },
-    // async getTargets() {
-    //   await notify('getTargets');
-    //   return await chrome.debugger.getTargets();
-    // },
-    // async sendCommand(target, method, commandParams) {
-    //   await notify('sendCommand', target, method, commandParams);
-    //   return await chrome.debugger.sendCommand(target, method, commandParams);
-    // }
+    destroy() {
+      cleanup();
+    }
   };
-  Comlink.expose(api, port);
+}
+
+const api = newApi();
+newConnectionHandler({
+  onConnect: (port) => {
+    const [register, cleanup] = newRegistry();
+    const notify = Comlink.wrap(port);
+    register(() => notify[Comlink.releaseProxy]());
+    Comlink.expose(
+      {
+        open: api.open,
+        until: api.until,
+        send: api.send,
+        close: api.close
+      },
+      port
+    );
+    return cleanup;
+  }
+});
+
+chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo) {
+  console.log('tabs.onUpdated', tabId, changeInfo);
+  if (changeInfo.status !== 'complete') return;
+
+  const secret = 'Hello, world!';
+  const cleanup = connectExtensionToPage({
+    tabId,
+    secret
+  });
 });
 
 // chrome.debugger.onEvent.addListener(function (source, method, params) {

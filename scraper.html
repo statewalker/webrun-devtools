@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Titre de la page</title>
+    <style>
+      main {
+        margin: auto;
+        max-width: 1000px;
+      }
+      #screenshots {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1em;
+      }
+      #screenshots .screenshot {
+        width: 100%;
+        border: 1px solid gray;
+      }
+
+      #screenshots .label {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Screen-Shooter</h1>
+      <p>This page automatically creates screenshots of external sites.</p>
+
+      <div id="screenshots"></div>
+    </main>
+    <script type="module">
+      import { establishPageToExtensionConnection } from "./establishPageToExtensionConnection.js";
+      import * as Comlink from 'https://unpkg.com/comlink/dist/esm/comlink.mjs';
+
+      Promise.resolve().then(main).catch(console.error);
+      async function main() {
+        const port = await establishPageToExtensionConnection();        
+        Comlink.expose((target, event, ...data) => {
+            console.log('A message from the extension', target, event, data);
+        }, port);
+        
+        const api = Comlink.wrap(port);
+        const target = await api.open();
+        console.log('Start session', target);
+
+        const url = 'https://webdriver.io/';
+
+        // enable events for Page domain  
+        await api.send(target, "Page.enable");
+        await api.send(target, "Page.navigate", { url });
+        await api.until(target, "Page.loadEventFired");
+        const document = await api.send(target, "DOM.getDocument");
+        const nodeId = document?.root?.nodeId;
+        const { nodeIds } = await api.send(target, "DOM.querySelectorAll", {
+          nodeId,
+          selector : ".button"
+        });
+        const content = await Promise.all(nodeIds.map(async (nodeId) => {
+          const { outerHTML } = await api.send(target, "DOM.getOuterHTML", { nodeId });
+          return outerHTML;
+        }));
+        console.log('>>>', nodeId, document, nodeIds, content );
+
+        await api.close(target);
+      }
+
+    </script>
+  </body>
+</html>
