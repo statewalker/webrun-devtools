@@ -90,19 +90,26 @@ export async function connectExtensionToPage({
       secret,
       callId
     }) {
+      let port;
+      async function checkBackgroundConnectionPort(channelPort) {
+        if (!port) {
+          port = await chrome.runtime.connect({ name: connectionType });
+          port.onDisconnect.addListener(() => (port = null));
+          port.onMessage.addListener((data) => channelPort.postMessage(data));
+          channelPort.onmessage = async ({ data }) => {
+            const port = await checkBackgroundConnectionPort(channelPort);
+            port.postMessage(data);
+          };
+        }
+        return port;
+      }
+
       window.addEventListener('message', async function messageListener(ev) {
         const { data, ports } = ev;
         if (data?.type === typeConnectionRequest && data?.callId === callId) {
           const channelPort = ports[0];
           if (data?.secret === secret) {
-            // window.removeEventListener('message', messageListener);
-            const port = await chrome.runtime.connect({ name: connectionType });
-            port.onMessage.addListener((data) => channelPort.postMessage(data));
-            channelPort.onmessage = ({ data }) => port.postMessage(data);
-            port.onDisconnect.addListener(() => {
-              channelPort.onmessage = null;
-              channelPort.close();
-            });
+            await checkBackgroundConnectionPort(channelPort);
             // Reply to the page using the recieved port
             channelPort.postMessage({ type: typeConnectionResponse, callId });
           } else {
