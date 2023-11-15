@@ -3,6 +3,10 @@
   "name": "Debugger Extension",
   "description": "Demonstrates the API by attaching a debugger to a webpage and capturing network data.",
   "version": "1.0",
+  "action": {
+    "default_icon": "./assets/icon-512.png",
+    "default_popup": "./popup/index.html"
+  },
   "permissions": [
     "debugger", 
     "tabs",
@@ -14,8 +18,7 @@
   ],
 
   "background": {
-    "service_worker": "service-worker.js",
+    "service_worker": "./background/index.js",
     "type": "module"
-  },
-  "action": {}
+  }
 }

@@ -1,4 +1,4 @@
-import newRegistry from './newRegistry.js';
+import newRegistry from '../libs/newRegistry.js';
 
 const TYPE_CONTENT_CONNECTION = 'content-connection';
 const TYPE_CONNECTION_REQUEST = 'connection-request';
@@ -61,6 +61,7 @@ export async function connectExtensionToPage({
   tabId,
   secret
 }) {
+  console.log('XXXXXXXXXXXX', secret);
   const callId = `call-${Date.now()}-${Math.random()}`;
   // Set listeners for messages comming from the page.
   await chrome.scripting.executeScript({

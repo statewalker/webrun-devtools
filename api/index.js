@@ -1,5 +1,5 @@
 // import * as Comlink from 'https://unpkg.com/comlink/dist/esm/comlink.mjs';
-import * as Comlink from './comlink.js';
+import * as Comlink from '../libs/comlink.js';
 
 export async function connectPageToExtension({ secret, onEvent = () => {} }) {
   if (!window.___debuggerPromise) {

@@ -1,9 +1,17 @@
-import * as Comlink from './comlink.js';
+import * as Comlink from '../libs/comlink.js';
 import {
   connectExtensionToPage,
   newConnectionHandler
 } from './connectExtensionToPage.js';
-import newRegistry from './newRegistry.js';
+import newRegistry from '../libs/newRegistry.js';
+import { loadSecret } from '../libs/secretsStore.js';
+
+// chrome.action.onClicked.addListener(async (tab) => {
+//   await chrome.action.openPopup({
+//     tabId : tab.id,
+//     isOnToolbar : true
+//   });
+// });
 
 function newTabsListeners() {
   const tabs = {};
@@ -184,8 +192,7 @@ newConnectionHandler({
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo) {
   console.log('tabs.onUpdated', tabId, changeInfo);
   if (changeInfo.status !== 'complete') return;
-
-  const secret = 'Hello, world!';
+  const secret = await loadSecret();
   const cleanup = connectExtensionToPage({
     tabId,
     secret

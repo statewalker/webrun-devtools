@@ -30,10 +30,12 @@
       <div id="screenshots"></div>
     </main>
     <script type="module">
-      import { connectPageToExtension } from "./connectPageToExtension.js";
+      import { connectPageToExtension } from "../api/index.js";
      
       Promise.resolve().then(main).catch(console.error);
       async function main() {
+        const secret = await prompt("Enter the debugger secret:");
+        console.log('>>>>>>', secret);
 
         const urls = [
           'https://svelte.dev/',
@@ -45,7 +47,7 @@
         ];
 
         const api = await connectPageToExtension({
-          secret : 'Hello, world!',
+          secret,
           onEvent : (target, event, ...data) => {
               console.log('A message from the extension', target, event, data);
           }
@@ -56,6 +58,7 @@
         await api.debugger.attach(target);
         try {
           await api.debugger.sendCommand(target, "Page.enable");
+          await new Promise(resolve => setTimeout(resolve, 1000));
           for (let url of urls) {
 
             await api.debugger.sendCommand(target, "Page.navigate", { url });
