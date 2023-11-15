@@ -54,26 +54,101 @@ function newApi() {
   register(() => chrome.debugger.onEvent.removeListener(handler));
 
   return {
-    async open(url = 'about:blank', version = '1.3') {
+    // ----------------------------
+
+    async tabs_create({ url = 'about:blank' } = {}) {
       const tab = await chrome.tabs.create({ url });
-      const target = { tabId: tab.id };
-      await chrome.debugger.attach(target, version);
+      const target = { tabId: tab.id, id: tab.id };
       return target;
     },
 
-    async until(target, event) {
+    async tabs_remove(tabId) {
+      await chrome.tabs.remove(tabId);
+    },
+
+    // ----------------------------
+
+    async debugger_attach(target, version = '1.3') {
+      await chrome.debugger.attach(target, version);
+    },
+
+    async debugger_dettach(target) {
+      await chrome.debugger.detach(target);
+    },
+
+    async debugger_$once(target, event) {
       return new Promise((resolve) => {
         listeners.once(target.tabId, event, resolve);
       });
     },
 
-    async send(target, method, commandParams) {
+    async debugger_sendCommand(target, method, commandParams) {
       return await chrome.debugger.sendCommand(target, method, commandParams);
     },
 
-    async close(target) {
-      await chrome.debugger.detach(target);
-      await chrome.tabs.remove(target.tabId);
+    async debugger_getTargets() {
+      return await chrome.debugger.getTargets();
+    },
+
+    // ----------------------------
+
+    async custom_injectScript(
+      target,
+      { func, args = [], type = 'module' } = {}
+    ) {
+      const [{ result, documentId, frameId }] =
+        await chrome.scripting.executeScript({
+          target,
+          injectImmediately: true,
+          world: 'MAIN',
+          args: [
+            {
+              func,
+              args,
+              type
+            }
+          ],
+          // A standalone script without any dependencies.
+          // So we can not use imported / global statements here.
+          func: async function injectedFunction({ func, args }) {
+            try {
+              const code = `return (${func})`;
+              const f = new Function([], code)();
+              const result = await f(...args);
+              return {
+                status: 'ok',
+                result
+              };
+            } catch (error) {
+              const stack = error.stack.split('\n');
+              let positions;
+              for (const line of stack) {
+                line.replace(
+                  /\(eval .* \(:(\d+):(\d+)\)[^\r\n]*:(\d+):(\d+)\)/gim,
+                  (_, _startLine, _startPos, _line, _pos) => {
+                    positions = [_startLine, _startPos, _line, _pos].map(
+                      (d) => +d
+                    );
+                  }
+                );
+                if (positions) break;
+              }
+              positions = positions || [0, 0, 0, 0];
+              const line = positions[2] - positions[0];
+              const column = positions[3];
+              return {
+                status: 'error',
+                error: {
+                  message: error.message,
+                  stack,
+                  line,
+                  column
+                }
+              };
+            }
+          }
+        });
+      return { ...result, documentId, frameId };
     },
 
     destroy() {
@@ -88,15 +163,20 @@ newConnectionHandler({
     const [register, cleanup] = newRegistry();
     const notify = Comlink.wrap(port);
     register(() => notify[Comlink.releaseProxy]());
-    Comlink.expose(
-      {
-        open: api.open,
-        until: api.until,
-        send: api.send,
-        close: api.close
-      },
-      port
-    );
+    const newHandler = (messageType) => {
+      return (...args) => notify(messageType, ...args);
+    };
+
+    const onEvent = newHandler('onEvent');
+    chrome.debugger.onEvent.addListener(onEvent);
+    register(() => chrome.debugger.onEvent.removeListener(onEvent));
+    const methods = Object.keys(api).filter((method) => method !== 'destroy');
+    notify('onConnect', { methods });
+    const exposedApi = methods.reduce((obj, method) => {
+      obj[method] = (...args) => api[method](...args);
+      return obj;
+    }, {});
+    Comlink.expose(exposedApi, port);
     return cleanup;
   }
 });

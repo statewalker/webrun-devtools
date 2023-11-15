@@ -12,7 +12,23 @@ export async function connectPageToExtension({ secret, onEvent = () => {} }) {
   }
   const getPort = await window.___debuggerPromise;
   const port = await getPort({ secret });
-  Comlink.expose(onEvent, port);
-  const api = Comlink.wrap(port);
+
+  const { methods } = await new Promise((resolve) => {
+    Comlink.expose((messageType, ...args) => {
+      if (messageType === 'onConnect') {
+        resolve(args[0]);
+      }
+      if (messageType === 'onEvent') {
+        onEvent(messageType, ...args);
+      }
+    }, port);
+  });
+  const connector = Comlink.wrap(port);
+  const api = methods.reduce((api, method) => {
+    const [ns, name] = method.split('_');
+    const obj = api[ns] || (api[ns] = {});
+    obj[name] = async (...args) => await connector[method](...args);
+    return api;
+  }, {});
   return api;
 }
