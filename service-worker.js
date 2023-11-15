@@ -72,7 +72,7 @@ function newApi() {
       await chrome.debugger.attach(target, version);
     },
 
-    async debugger_dettach(target) {
+    async debugger_detach(target) {
       await chrome.debugger.detach(target);
     },
 

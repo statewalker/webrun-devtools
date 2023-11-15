@@ -32,18 +32,8 @@
     <script type="module">
       import { connectPageToExtension } from "./connectPageToExtension.js";
      
-
       Promise.resolve().then(main).catch(console.error);
       async function main() {
-        const api = await connectPageToExtension({
-          secret : 'Hello, world!',
-          onEvent : (target, event, ...data) => {
-              console.log('A message from the extension', target, event, data);
-          }
-        });        
-        
-        const target = await api.open();
-        console.log('Start session', target);
 
         const urls = [
           'https://svelte.dev/',
@@ -54,36 +44,52 @@
           'https://webdriver.io/',
         ];
 
-        // enable events for Page domain  
-        await api.send(target, "Page.enable");
-        for (let url of urls) {
-          await api.send(target, "Page.navigate", { url });
-          await api.until(target, "Page.loadEventFired");
-          await new Promise(resolve => setTimeout(resolve, 1 * 300));
+        const api = await connectPageToExtension({
+          secret : 'Hello, world!',
+          onEvent : (target, event, ...data) => {
+              console.log('A message from the extension', target, event, data);
+          }
+        });        
+        
+        const tab = await api.tabs.create();
+        const target = { tabId: tab.id };
+        await api.debugger.attach(target);
+        try {
+          await api.debugger.sendCommand(target, "Page.enable");
+          for (let url of urls) {
 
-          // const { data } = await api.send("Page.printToPDF");
-          const { data } = await api.send(target, "Page.captureScreenshot", { format: 'png' });
+            await api.debugger.sendCommand(target, "Page.navigate", { url });
+            await api.debugger.$once(target, "Page.loadEventFired");
+            const { data } = await api.debugger.sendCommand(
+              target,
+              "Page.captureScreenshot",
+              {
+                format: "png"
+              }
+            );
 
-          const div = document.createElement('div');
-          document.querySelector("#screenshots").appendChild(div);
+            const div = document.createElement('div');
+            document.querySelector("#screenshots").appendChild(div);
 
-          const img = document.createElement('img');
-          img.src = `data:image/png;base64,${data}`;
-          img.className = 'screenshot';
-          div.appendChild(img);
-          const label = document.createElement('div');
-          label.className = 'label';
-          div.appendChild(label);
+            const img = document.createElement('img');
+            img.src = `data:image/png;base64,${data}`;
+            img.className = 'screenshot';
+            div.appendChild(img);
+            const label = document.createElement('div');
+            label.className = 'label';
+            div.appendChild(label);
 
-          const ref = document.createElement('a');
-          ref.href = url;
-          ref.target = '_blank';
-          ref.className = 'label';
-          ref.innerText = url;  
-          label.appendChild(ref);
-
+            const ref = document.createElement('a');
+            ref.href = url;
+            ref.target = '_blank';
+            ref.className = 'label';
+            ref.innerText = url;  
+            label.appendChild(ref);
+          }
+        } finally {
+          await api.debugger.detach(target);
+          await api.tabs.remove(tab.id);
         }
-        await api.close(target);
       }
 
     </script>
