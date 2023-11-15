@@ -35,8 +35,6 @@
       Promise.resolve().then(main).catch(console.error);
       async function main() {
         const secret = await prompt("Enter the debugger secret:");
-        console.log('>>>>>>', secret);
-
         const urls = [
           'https://svelte.dev/',
           'https://astro.build',
@@ -58,11 +56,12 @@
         await api.debugger.attach(target);
         try {
           await api.debugger.sendCommand(target, "Page.enable");
-          await new Promise(resolve => setTimeout(resolve, 1000));
           for (let url of urls) {
 
             await api.debugger.sendCommand(target, "Page.navigate", { url });
             await api.debugger.$once(target, "Page.loadEventFired");
+            await new Promise(resolve => setTimeout(resolve, 300));
+
             const { data } = await api.debugger.sendCommand(
               target,
               "Page.captureScreenshot",

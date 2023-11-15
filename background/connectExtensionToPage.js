@@ -61,7 +61,6 @@ export async function connectExtensionToPage({
   tabId,
   secret
 }) {
-  console.log('XXXXXXXXXXXX', secret);
   const callId = `call-${Date.now()}-${Math.random()}`;
   // Set listeners for messages comming from the page.
   await chrome.scripting.executeScript({
