@@ -34,7 +34,7 @@
      
       Promise.resolve().then(main).catch(console.error);
       async function main() {
-        const secret = "SW_DEBUGGER_KEY_CHANGE_ME" // await prompt("Enter the debugger secret:", "SW_DEBUGGER_KEY_CHANGE_ME");
+        const secret = await prompt("Enter the debugger secret:", "SW_DEBUGGER_KEY_CHANGE_ME");
         const urls = [
           'https://svelte.dev/',
           'https://astro.build',
@@ -45,11 +45,11 @@
         ];
 
         const api = await connectToExtension({
-          secret,
-          onEvent : (target, event, ...data) => {
-              console.log('A message from the extension', target, event, data);
-          }
-        });        
+          secret
+        });
+        await api.debugger.onEvent((target, event, ...data) => {
+          console.log('A message from the extension', target, event, data);
+        })
         
         const tab = await api.tabs.create();
         const target = { tabId: tab.id };

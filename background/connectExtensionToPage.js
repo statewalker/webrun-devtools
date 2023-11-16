@@ -1,11 +1,11 @@
 import newRegistry from '../libs/newRegistry.js';
-
-const TYPE_CONTENT_CONNECTION = 'content-connection';
-const TYPE_EXTENSION_READY = 'extension-ready';
-const TYPE_CONNECTION_REQUEST = 'connection-request';
-const TYPE_CONNECTION_RESPONSE = 'connection-response';
-const TYPE_CONNECTION_ERROR = 'connection-error';
-
+import { 
+  TYPE_CONTENT_CONNECTION,
+  TYPE_CONNECTION_ERROR, 
+  TYPE_CONNECTION_REQUEST, 
+  TYPE_CONNECTION_RESPONSE, 
+  TYPE_EXTENSION_READY
+} from '../libs/constants.js';
 /**
  * This wrapper function transforms chrome.runtime.onConnect ports
  * to simple MessageChannel ports. It validates that the port name

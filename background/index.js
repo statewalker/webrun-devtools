@@ -5,7 +5,20 @@ import {
 import newRegistry from '../libs/newRegistry.js';
 import { loadSecret } from '../libs/secretsStore.js';
 import { newExtensionApi } from './newBackgroundApi.js';
-import { listenPort } from '../libs/portCalls.js';
+import { callPort, listenPort } from '../libs/portCalls.js';
+import { 
+  METHOD_DONE, 
+  METHOD_INIT, 
+  METHOD_ADD_LISTENER,
+  METHOD_REMOVE_LISTENER, 
+  METHOD_NOTIFY_LISTENER, 
+
+  TYPE_CONNECTION_ERROR, 
+  TYPE_CONNECTION_REQUEST, 
+  TYPE_CONNECTION_RESPONSE, 
+  TYPE_EXTENSION_READY
+} from '../libs/constants.js';
+
 
 function getMethods(obj, index = {}, prefix = '') {
   for (const key in obj) {
@@ -36,24 +49,23 @@ newConnectionHandler({
     })
 
     register(listenPort(port, async ({ method, args }) => {
-      console.log('listenPort', method, args);
-      if (method === 'init') {
+      if (method === METHOD_INIT) {
         return {
           methods : Object.keys(methods)
         };
-      } else if (method === "done") {
+      } else if (method === METHOD_DONE) {
         cleanup();
-      } else if (method === 'addListener') {
+      } else if (method === METHOD_ADD_LISTENER) {
         const [eventMethodName] = args;
         const id = newId('listener-');
         listeners[id] = methods[eventMethodName](async (...callParams) => {
           await callPort(port, {
-            method: 'notifyListener',
+            method: METHOD_NOTIFY_LISTENER,
             args: [id, ...callParams]
           });
         });
         return id;
-      } else if (method === 'removeListener') {
+      } else if (method === METHOD_REMOVE_LISTENER) {
         const [listenerId] = args;
         if (listeners[listenerId]) {
           await listeners[listenerId]();
@@ -73,7 +85,6 @@ newConnectionHandler({
 });
 
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo) {
-  console.log('tabs.onUpdated', tabId, changeInfo);
   if (changeInfo.status !== 'complete') return;
   const secret = await loadSecret();
   const cleanup = connectExtensionToPage({

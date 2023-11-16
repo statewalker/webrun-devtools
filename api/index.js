@@ -1,15 +1,21 @@
 import { callPort, listenPort } from '../libs/portCalls.js';
 import { set } from '../libs/getset.js';
 import newRegistry from '../libs/newRegistry.js';
+import { 
+  METHOD_DONE, 
+  METHOD_INIT, 
+  METHOD_ADD_LISTENER,
+  METHOD_REMOVE_LISTENER, 
+  METHOD_NOTIFY_LISTENER, 
 
-const TYPE_EXTENSION_READY = 'extension-ready';
-const TYPE_CONNECTION_REQUEST = 'connection-request';
-const TYPE_CONNECTION_RESPONSE = 'connection-response';
-const TYPE_CONNECTION_ERROR = 'connection-error';
+  TYPE_CONNECTION_ERROR, 
+  TYPE_CONNECTION_REQUEST, 
+  TYPE_CONNECTION_RESPONSE, 
+  TYPE_EXTENSION_READY
+} from '../libs/constants.js';
 
 export default async function connectPageToExtension({
   secret, 
-  onEvent = () => {},
   timeout = 1000 * 5,
   callTimeout = 1000 * 60 * 5,
   closeTimeout = 1000 * 5,
@@ -33,16 +39,17 @@ export default async function connectPageToExtension({
     }  
     onMessage = (event) => {
       if (event.source !== window) return;
-      if (event.data.type === TYPE_EXTENSION_READY) {
+      const { data, ports } = event;
+      if (data?.type === TYPE_EXTENSION_READY) {
         requestConnection();
-      } else if (event.data.callId === callId) {
-        if (event.data.type === TYPE_CONNECTION_ERROR) {
+      } else if (data?.callId === callId) {
+        if (data?.type === TYPE_CONNECTION_ERROR) {
           window.removeEventListener('message', onMessage);
-          reject(new Error(event.data.message));
+          reject(new Error(data.message));
           resolved = true;
-        } else if (event.data.type === TYPE_CONNECTION_RESPONSE) {
+        } else if (data.type === TYPE_CONNECTION_RESPONSE) {
           window.removeEventListener('message', onMessage);
-          resolve(event.ports[0]);
+          resolve(ports[0]);
           resolved = true;
         }
       }
@@ -59,7 +66,7 @@ export default async function connectPageToExtension({
   const [register, cleanup] = newRegistry();
 
   const { methods } = await callPort(port, {
-    method: 'init',
+    method: METHOD_INIT,
     args : []
   });
 
@@ -71,8 +78,9 @@ export default async function connectPageToExtension({
     }
     listeners = {};
   })
+
   register(listenPort(port, async ({ method, args }) => {
-    if (method === "notifyListener") {
+    if (method === METHOD_NOTIFY_LISTENER) {
       const [listenerId, ...params] = args;
       const { listener } = listeners[listenerId] || {};
       if (listener) {
@@ -87,15 +95,15 @@ export default async function connectPageToExtension({
     const path = name.split('_');
     let method;
     if (name.match(/_on[A-Z]/)) {
-      method = async (...args) => {
+      method = async (listener) => {
         const listenerId = await callPort(port, {
-          method : "addListener",
-          args : [name, ...args],
+          method : METHOD_ADD_LISTENER,
+          args : [name],
         })
         const remove = async () => {
           delete listeners[listenerId];
           await callPort(port, {
-            method : "removeListener",
+            method : METHOD_REMOVE_LISTENER,
             args : [listenerId, name],
           })
         }
@@ -116,7 +124,7 @@ export default async function connectPageToExtension({
   api.close = async () => {
    cleanup(); 
     await callPort(port, {
-      method : "done",
+      method : METHOD_DONE,
       args : []
     });
     setTimeout(() => port.close(), closeTimeout)
