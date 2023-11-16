@@ -1,5 +1,5 @@
-// import * as Comlink from 'https://unpkg.com/comlink/dist/esm/comlink.mjs';
-import * as Comlink from '../libs/comlink.js';
+import { callPort, listenPort } from '../libs/portCalls.js';
+import { set } from '../libs/getset.js';
 
 const TYPE_EXTENSION_READY = 'extension-ready';
 const TYPE_CONNECTION_REQUEST = 'connection-request';
@@ -9,13 +9,17 @@ const TYPE_CONNECTION_ERROR = 'connection-error';
 export default async function connectPageToExtension({
   secret, 
   onEvent = () => {},
-  timeout = 1000 * 5
+  timeout = 1000 * 5,
+  callTimeout = 1000 * 60 * 5
 }) {
+  function newId(prefix = 'id-') {
+    return `call-${Date.now()}-${Math.random()}`;
+  }
   let timerId, onMessage;
   const promise = new Promise((resolve, reject) => {
-    timerId = setTimeout(() => reject(new Error('Connection timeout. Please check that the extension is')), timeout);
+    timerId = setTimeout(() => reject(new Error('Connection timeout. Please check that the debugger extension is active')), timeout);
     let resolved = false;
-    const callId = `call-${Date.now()}-${Math.random()}`;
+    const callId = newId('call-');
     function requestConnection() {
       if (resolved) return;
       window.postMessage({ type: TYPE_CONNECTION_REQUEST, secret, callId }, '*');
@@ -42,24 +46,21 @@ export default async function connectPageToExtension({
   promise.finally(() => clearTimeout(timerId));
   promise.finally(() => onMessage && window.removeEventListener('message', onMessage));
 
-  const port = await promise;;  
-  const { methods } = await new Promise((resolve) => {
-    Comlink.expose((messageType, ...args) => {
-      if (messageType === 'onConnect') {
-        resolve(args[0]);
-      }
-      if (messageType === 'onEvent') {
-        onEvent(messageType, ...args);
-      }
-    }, port);
+  const port = await promise;
+  port.start();
+  const methods = await callPort(port, {
+    method: 'getMethods',
+    args : []
   });
-  const connector = Comlink.wrap(port);
 
-  const api = methods.reduce((api, method) => {
-    const [ns, name] = method.split('_');
-    const obj = api[ns] || (api[ns] = {});
-    obj[name] = async (...args) => await connector[method](...args);
-    return api;
-  }, {});
+  const api = {};
+  for (let method of methods) {
+    const path = method.split('_');
+    set(api, path, async (...args) => await callPort(port, {
+      method,
+      args
+    }, callTimeout));
+  }
   return api;
+
 }

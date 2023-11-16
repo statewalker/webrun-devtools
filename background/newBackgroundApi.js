@@ -1,56 +1,120 @@
-import newRegistry from '../libs/newRegistry.js';
+function wrapChromeApi(ns, methods) {
+  return methods.reduce((api, method) => {
+    if (method.startsWith('on')) {
+      api[method] = (listener) => {
+        chrome[ns][method].addListener(listener);
+        return () => chrome[ns][method].removeListener(listener);
+      }
+    } else {
+      api[method] = async (...args) => await chrome[ns][method](...args);
+    }
+    return api;
+  }, {});
+}
 
-export function newExtensionApi() {
-  const [register, cleanup] = newRegistry();
-  const listeners = newTabsListeners();
-  register(listeners.close);
+function getTabsApi() {
+  // ----------------------------
+  // https://developer.chrome.com/docs/extensions/reference/tabs/
+  // chrome.tabs API:
+  const api = wrapChromeApi("tabs", [
+    // ----------------------------
+    // Methods
+    'captureVisibleTab',
+    'connect',
+    'create',
+    'detectLanguage',
+    'discard',
+    'duplicate',
+    'executeScript',
+    'get',
+    'getAllInWindow',
+    'getCurrent',
+    'getSelected',
+    'getZoom',
+    'getZoomSettings',
+    'goBack',
+    'goForward',
+    'group',
+    'highlight',
+    'insertCSS',
+    'move',
+    'query',
+    'reload',
+    'remove',
+    'removeCSS',
+    'sendMessage',
+    'sendRequest',
+    'setZoom',
+    'setZoomSettings',
+    'ungroup',
+    'update',
 
-  function handler(source, method, params) {
-    listeners.notify(source.tabId, method, params);
-  }
-  chrome.debugger.onEvent.addListener(handler);
-  register(() => chrome.debugger.onEvent.removeListener(handler));
+    // ----------------------------
+    // Events
+    'onActiveChanged',
+    'onActivated',
+    'onAttached',
+    'onCreated',
+    'onDetached',
+    'onHighlightChanged',
+    'onHighlighted',
+    'onMoved',
+    'onRemoved',
+    'onReplaced',
+    'onSelectionChanged',
+    'onUpdated',
+    'onZoomChange'
+  ]);
 
-  return {
+  return Object.assign(api, {
     // ----------------------------
 
-    async tabs_create({ url = 'about:blank' } = {}) {
+    async create({ url = 'about:blank' } = {}) {
       const tab = await chrome.tabs.create({ url });
       const target = { tabId: tab.id, id: tab.id };
       return target;
     },
 
-    async tabs_remove(tabId) {
+    async remove(tabId) {
       await chrome.tabs.remove(tabId);
     },
+  });
 
-    // ----------------------------
+}
 
-    async debugger_attach(target, version = '1.3') {
-      await chrome.debugger.attach(target, version);
-    },
-
-    async debugger_detach(target) {
-      await chrome.debugger.detach(target);
-    },
-
-    async debugger_$once(target, event) {
-      return new Promise((resolve) => {
-        listeners.once(target.tabId, event, resolve);
+function getDebuggerApi() {
+  const api = wrapChromeApi("debugger", [
+    "attach", 
+    "detach", 
+    "sendCommand", 
+    "getTargets",
+    "onDetach",
+    "onEvent",
+  ]);
+  return Object.assign(api, {
+    async $once(target, event) {
+      let handler;
+      const promise = new Promise((resolve, reject) => {
+        chrome.debugger.onEvent.addListener(handler = (source, method, params) => {
+          if (source.tabId !== target.tabId) return;
+          if (method !== event) return;
+          resolve({
+            method,
+            params
+          });
+        })
       });
+      promise.finally(() => chrome.debugger.onEvent.removeListener(handler));
+      return promise;
     },
+  });
+}
 
-    async debugger_sendCommand(target, method, commandParams) {
-      return await chrome.debugger.sendCommand(target, method, commandParams);
-    },
 
-    async debugger_getTargets() {
-      return await chrome.debugger.getTargets();
-    },
+function getCustomApi() {
+  return {
 
-    // ----------------------------
-
-    async custom_injectScript(
+    async injectScript(
       target,
       { func, args = [], type = 'module' } = {}
     ) {
@@ -108,46 +172,15 @@ export function newExtensionApi() {
         });
       return { ...result, documentId, frameId };
     },
+  }
+}
 
-    destroy() {
-      cleanup();
-    }
+export function newExtensionApi() {
+  return  {
+    tabs : getTabsApi(),
+    debugger : getDebuggerApi(),
+    custom : getCustomApi(),
   };
 }
 
-function newTabsListeners() {
-  const tabs = {};
-  const [register, cleanup] = newRegistry();
-  return {
-    on(tabId, method, listener) {
-      const methods = (tabs[tabId] = tabs[tabId] || {});
-      const list = (methods[method] = methods[method] || []);
-      list.push(listener);
-      return register(() => {
-        const index = list.indexOf(listener);
-        if (index !== -1) list.splice(index, 1);
-        if (list.length === 0) {
-          delete methods[method];
-          if (Object.keys(methods).length === 0) {
-            delete tabs[tabId];
-          }
-        }
-      });
-    },
-    once(tabId, method, listener) {
-      const cleanup = this.on(tabId, method, (...args) => {
-        cleanup();
-        listener(...args);
-      });
-      return cleanup;
-    },
-    notify(tabId, method, params) {
-      const methods = tabs[tabId];
-      if (!methods) return;
-      const list = methods[method];
-      if (!list) return;
-      list.forEach((listener) => listener(params));
-    },
-    close: cleanup
-  };
-}
+

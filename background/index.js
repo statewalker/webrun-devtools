@@ -1,4 +1,3 @@
-import * as Comlink from '../libs/comlink.js';
 import {
   connectExtensionToPage,
   newConnectionHandler
@@ -6,27 +5,38 @@ import {
 import newRegistry from '../libs/newRegistry.js';
 import { loadSecret } from '../libs/secretsStore.js';
 import { newExtensionApi } from './newBackgroundApi.js';
+import { listenPort } from '../libs/portCalls.js';
+
+function getMethods(obj, index = {}, prefix = '') {
+  for (const key in obj) {
+    if (typeof obj[key] === 'object') {
+      getMethods(obj[key], index, `${prefix}${key}_`);
+    } else {
+      index[`${prefix}${key}`] = obj[key];
+    }
+  }
+  return index;
+}
 
 const api = newExtensionApi();
 newConnectionHandler({
   onConnect: (port) => {
     const [register, cleanup] = newRegistry();
-    const notify = Comlink.wrap(port);
-    register(() => notify[Comlink.releaseProxy]());
-    const newHandler = (messageType) => {
-      return (...args) => notify(messageType, ...args);
-    };
-
-    const onEvent = newHandler('onEvent');
-    chrome.debugger.onEvent.addListener(onEvent);
-    register(() => chrome.debugger.onEvent.removeListener(onEvent));
-    const methods = Object.keys(api).filter((method) => method !== 'destroy');
-    notify('onConnect', { methods });
-    const exposedApi = methods.reduce((obj, method) => {
-      obj[method] = (...args) => api[method](...args);
-      return obj;
-    }, {});
-    Comlink.expose(exposedApi, port);
+    const methods = getMethods(api);
+    port.start();
+    register(listenPort(port, async ({ method, args }) => {
+      console.log('listenPort', method, args);
+      if (method === 'getMethods') {
+        return Object.keys(methods);
+      } else {
+        const fn = methods[method];
+        if (typeof fn === 'function') {
+          return await fn(...args);
+        } else {
+          throw new Error(`Unknown method "${method}"}`);
+        }
+      }
+    }))
     return cleanup;
   }
 });

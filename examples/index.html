@@ -34,7 +34,7 @@
      
       Promise.resolve().then(main).catch(console.error);
       async function main() {
-        const secret = await prompt("Enter the debugger secret:", "SW_DEBUGGER_KEY_CHANGE_ME");
+        const secret = "SW_DEBUGGER_KEY_CHANGE_ME" // await prompt("Enter the debugger secret:", "SW_DEBUGGER_KEY_CHANGE_ME");
         const urls = [
           'https://svelte.dev/',
           'https://astro.build',
@@ -53,7 +53,7 @@
         
         const tab = await api.tabs.create();
         const target = { tabId: tab.id };
-        await api.debugger.attach(target);
+        await api.debugger.attach(target, '1.3');
         try {
           await api.debugger.sendCommand(target, "Page.enable");
           for (let url of urls) {
