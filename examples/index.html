@@ -30,7 +30,7 @@
       <div id="screenshots"></div>
     </main>
     <script type="module">
-      import { connectPageToExtension } from "../api/index.js";
+      import connectToExtension from "../api/index.js";
      
       Promise.resolve().then(main).catch(console.error);
       async function main() {
@@ -44,7 +44,7 @@
           'https://webdriver.io/',
         ];
 
-        const api = await connectPageToExtension({
+        const api = await connectToExtension({
           secret,
           onEvent : (target, event, ...data) => {
               console.log('A message from the extension', target, event, data);
