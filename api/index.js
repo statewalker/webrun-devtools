@@ -13,7 +13,7 @@ export default async function connectPageToExtension({
 }) {
   let timerId, onMessage;
   const promise = new Promise((resolve, reject) => {
-    timerId = setTimeout(() => reject(new Error('Timeout')), timeout);
+    timerId = setTimeout(() => reject(new Error('Connection timeout. Please check that the extension is')), timeout);
     let resolved = false;
     const callId = `call-${Date.now()}-${Math.random()}`;
     function requestConnection() {
@@ -27,7 +27,7 @@ export default async function connectPageToExtension({
       } else if (event.data.callId === callId) {
         if (event.data.type === TYPE_CONNECTION_ERROR) {
           window.removeEventListener('message', onMessage);
-          reject(event.data.error);
+          reject(new Error(event.data.message));
           resolved = true;
         } else if (event.data.type === TYPE_CONNECTION_RESPONSE) {
           window.removeEventListener('message', onMessage);
