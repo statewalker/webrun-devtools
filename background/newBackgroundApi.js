@@ -12,38 +12,55 @@ function wrapChromeApi(ns, methods) {
   }, {});
 }
 
+function getWindowApi() {
+  return wrapChromeApi("windows", [
+    "create",
+    "get",
+    "getAll",
+    "getCurrent",
+    "getLastFocused",
+    "remove",
+    "update",
+
+    "onBoundsChanged",
+    "onCreated",
+    "onFocusChanged",
+    "onRemoved",
+  ]);
+}
+
 function getTabsApi() {
   // ----------------------------
   // https://developer.chrome.com/docs/extensions/reference/tabs/
   // chrome.tabs API:
   const api = wrapChromeApi("tabs", [
     // ----------------------------
-    // Methods
+
     'captureVisibleTab',
-    'connect',
+    // 'connect', // can not return ports
     'create',
     'detectLanguage',
     'discard',
     'duplicate',
-    'executeScript',
+    // 'executeScript', // deprecated
     'get',
-    'getAllInWindow',
+    // 'getAllInWindow', // deprecated
     'getCurrent',
-    'getSelected',
+    // 'getSelected', // deprecated
     'getZoom',
     'getZoomSettings',
     'goBack',
     'goForward',
     'group',
     'highlight',
-    'insertCSS',
+    // 'insertCSS', // deprecated
     'move',
     'query',
     'reload',
     'remove',
-    'removeCSS',
+    // 'removeCSS', // deprecated
     'sendMessage',
-    'sendRequest',
+    // 'sendRequest', // deprecated
     'setZoom',
     'setZoomSettings',
     'ungroup',
@@ -51,17 +68,17 @@ function getTabsApi() {
 
     // ----------------------------
     // Events
-    'onActiveChanged',
+    // 'onActiveChanged', // deprecated
     'onActivated',
     'onAttached',
     'onCreated',
     'onDetached',
-    'onHighlightChanged',
+    // 'onHighlightChanged', // deprecated
     'onHighlighted',
     'onMoved',
     'onRemoved',
     'onReplaced',
-    'onSelectionChanged',
+    // 'onSelectionChanged', // deprecated
     'onUpdated',
     'onZoomChange'
   ]);
@@ -69,15 +86,12 @@ function getTabsApi() {
   return Object.assign(api, {
     // ----------------------------
 
-    async create({ url = 'about:blank' } = {}) {
-      const tab = await chrome.tabs.create({ url });
-      const target = { tabId: tab.id, id: tab.id };
-      return target;
-    },
+    // async create({ url = 'about:blank' } = {}) {
+    //   const tab = await chrome.tabs.create({ url });
+    //   const target = { tabId: tab.id, id: tab.id };
+    //   return target;
+    // },
 
-    async remove(tabId) {
-      await chrome.tabs.remove(tabId);
-    },
   });
 
 }
@@ -179,6 +193,7 @@ export function newExtensionApi() {
   return  {
     tabs : getTabsApi(),
     debugger : getDebuggerApi(),
+    windows : getWindowApi(),
     custom : getCustomApi(),
   };
 }

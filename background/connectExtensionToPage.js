@@ -30,16 +30,32 @@ export function newConnectionHandler({
     if (port.name !== connectionType) return;
     const { sender } = port;
     const channel = new MessageChannel();
-    port.onMessage.addListener((data) => channel.port1.postMessage(data));
-    channel.port1.onmessage = ({ data }) => port.postMessage(data);
-    const reg = onConnect(channel.port2, sender);
-    const closePort = register(() => {
-      channel.port1.onmessage = null;
-      channel.port1.close();
-      channel.port2.close();
-      if (typeof reg === 'function') reg();
-    });
-    port.onDisconnect.addListener(closePort);
+    const [reg, cln] = newRegistry();
+    const onMessage = (data) => {
+      try {
+        channel.port1.postMessage(data);
+      } catch (err) {
+        cln();
+      }
+    }
+    port.onMessage.addListener(onMessage);
+    reg(() => port.onMessage.removeListener(onMessage))
+
+    channel.port1.onmessage = ({ data }) => {
+      try {
+        port.postMessage(data);
+      } catch (err) {
+        cln();
+      }
+    };
+    reg(() => channel.port1.onmessage = null);
+    reg(() => channel.port1.close());
+    reg(() => channel.port2.close());
+
+    reg(onConnect(channel.port2, sender));
+
+    const cleanAll = reg(register(cln));
+    port.onDisconnect.addListener(cleanAll);
   };
   chrome.runtime.onConnect.addListener(connectionHandler);
   register(() => chrome.runtime.onConnect.removeListener(connectionHandler));

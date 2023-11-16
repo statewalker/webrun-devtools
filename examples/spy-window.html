@@ -47,26 +47,37 @@
         ];
 
         const api = await connectToExtension({ secret });
-        
-        const win = await api.windows.create({
-          url : 'about:blank',
-          focused : true,
-          width : 800,
-          height : 600
-        });
-        try {
-          const tab = win.tabs[0];
-          console.log('A tab created', tab);
-
-          for (let url of urls) {
-            await api.tabs.update(tab.id, { url, active: true });
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            await makeScreenshot(api, win.id, url);
-          }
-        } finally {
-          await api.windows.remove(win.id);
+        const windowsList = await api.windows.getAll();
+        async function printWindowInfo(win) {
+          console.log('Window', win);
+          const tabs = await api.tabs.query({
+            windowId : win.id
+          });
+          console.log('tabs', tabs);
         }
+
+        for (let win of windowsList) {
+          await printWindowInfo(win);
+        }
+
+        console.log("--------------------------------");
+
+        const [register, cleanup] = newRegistry();
+        register(await api.windows.onCreated(async (win) => {
+          console.log('A window created', win);
+          await printWindowInfo(win);
+        }));
+        
+        register(await api.tabs.onUpdated(async (tabId, info) => {
+          if (info.status !== 'complete') {
+            return;
+          }
+          const tab = await api.tabs.get(tabId);
+          console.log('A tab updated', tab);
+          await makeScreenshot(api, tab.windowId, tab.url);
+        }));
       }
+    
 
       async function makeScreenshot(api, windowId, url) {
         const imgUrl = await api.tabs.captureVisibleTab(windowId, {

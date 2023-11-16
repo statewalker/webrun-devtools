@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Titre de la page</title>
+    <style>
+      main {
+        margin: auto;
+        max-width: 1000px;
+      }
+      #screenshots {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1em;
+      }
+      #screenshots .screenshot {
+        width: 100%;
+        border: 1px solid gray;
+      }
+
+      #screenshots .label {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Screen-Shooter</h1>
+      <p>This page automatically creates screenshots of external sites.</p>
+
+      <div id="screenshots"></div>
+    </main>
+    <script type="module">
+      import connectToExtension from "../api/index.js";
+     
+      Promise.resolve().then(main).catch(console.error);
+      async function main() {
+        const secret = await prompt("Enter the debugger secret:", "SW_DEBUGGER_KEY_CHANGE_ME");
+        const urls = [
+          'https://svelte.dev/',
+          'https://astro.build',
+          'https://react.dev/',
+          'https://www.solidjs.com/',
+          'https://vuejs.org/',
+          'https://webdriver.io/',
+        ];
+
+        const api = await connectToExtension({
+          secret
+        });
+        await api.debugger.onEvent((target, event, ...data) => {
+          console.log('A message from the extension', target, event, data);
+        })
+        
+        const tab = await api.tabs.create({
+          url: 'about:blank',
+        });
+        const target = { tabId: tab.id };
+        await api.debugger.attach(target, '1.3');
+        try {
+          await api.debugger.sendCommand(target, "Page.enable");
+          for (let url of urls) {
+
+            await api.debugger.sendCommand(target, "Page.navigate", { url });
+            await api.debugger.$once(target, "Page.loadEventFired");
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            const { data } = await api.debugger.sendCommand(
+              target,
+              "Page.captureScreenshot",
+              {
+                format: "png"
+              }
+            );
+
+            const div = document.createElement('div');
+            document.querySelector("#screenshots").appendChild(div);
+
+            const img = document.createElement('img');
+            img.src = `data:image/png;base64,${data}`;
+            img.className = 'screenshot';
+            div.appendChild(img);
+            const label = document.createElement('div');
+            label.className = 'label';
+            div.appendChild(label);
+
+            const ref = document.createElement('a');
+            ref.href = url;
+            ref.target = '_blank';
+            ref.className = 'label';
+            ref.innerText = url;  
+            label.appendChild(ref);
+          }
+        } finally {
+          await api.debugger.detach(target);
+          await api.tabs.remove(tab.id);
+        }
+      }
+
+    </script>
+  </body>
+</html>

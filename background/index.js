@@ -40,7 +40,7 @@ newConnectionHandler({
     const methods = getMethods(api);
     port.start();
     
-    const listeners = {};
+    let listeners = {};
     register(() => {
       for (let remove of Object.values(listeners)) {
         remove();
