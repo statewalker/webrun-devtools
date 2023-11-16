@@ -1,6 +1,7 @@
 import newRegistry from '../libs/newRegistry.js';
 
 const TYPE_CONTENT_CONNECTION = 'content-connection';
+const TYPE_EXTENSION_READY = 'extension-ready';
 const TYPE_CONNECTION_REQUEST = 'connection-request';
 const TYPE_CONNECTION_RESPONSE = 'connection-response';
 const TYPE_CONNECTION_ERROR = 'connection-error';
@@ -61,7 +62,7 @@ export async function connectExtensionToPage({
   tabId,
   secret
 }) {
-  const callId = `call-${Date.now()}-${Math.random()}`;
+ 
   // Set listeners for messages comming from the page.
   await chrome.scripting.executeScript({
     target: {
@@ -73,22 +74,22 @@ export async function connectExtensionToPage({
     args: [
       {
         connectionType,
+        typeExtensionReady: TYPE_EXTENSION_READY,
         typeConnectionRequest: TYPE_CONNECTION_REQUEST,
         typeConnectionResponse: TYPE_CONNECTION_RESPONSE,
         typeConnectionError: TYPE_CONNECTION_ERROR,
-        secret,
-        callId
+        secret
       }
     ],
     // A standalone script without any dependencies.
     // So we can not use imported / global statements here.
     func: async function injectedFunction({
       connectionType,
+      typeExtensionReady,
       typeConnectionRequest,
       typeConnectionResponse,
       typeConnectionError,
-      secret,
-      callId
+      secret
     }) {
       let port;
       async function checkBackgroundConnectionPort(channelPort) {
@@ -103,91 +104,30 @@ export async function connectExtensionToPage({
         }
         return port;
       }
-
       window.addEventListener('message', async function messageListener(ev) {
-        const { data, ports } = ev;
-        if (data?.type === typeConnectionRequest && data?.callId === callId) {
-          const channelPort = ports[0];
+        const { data } = ev;
+        let responseData, responsePort;
+        if (data?.type === typeConnectionRequest) {
+          const { callId } = data;
           if (data?.secret === secret) {
-            await checkBackgroundConnectionPort(channelPort);
-            // Reply to the page using the recieved port
-            channelPort.postMessage({ type: typeConnectionResponse, callId });
+            const channel = new MessageChannel();
+            responsePort = channel.port2;
+            await checkBackgroundConnectionPort(channel.port1);
+            responseData = { type: typeConnectionResponse, callId };
           } else {
             const message =
               'The page is not authorized to establish connection with this extension.';
-            channelPort.postMessage({
+            responseData = {
               type: typeConnectionError,
               callId,
               message
-            });
-            channelPort.close();
+            };
             console.warn(message);
           }
+          window.postMessage(responseData, '*', responsePort ? [responsePort] : []);
         }
       });
-    }
-  });
-
-  // Send a message from the page to establish connection.
-  await chrome.scripting.executeScript({
-    target: {
-      tabId,
-      allFrames: true
-    },
-    injectImmediately: true,
-    world: 'MAIN',
-    args: [
-      {
-        connectionType,
-        typeConnectionRequest: TYPE_CONNECTION_REQUEST,
-        typeConnectionResponse: TYPE_CONNECTION_RESPONSE,
-        typeConnectionError: TYPE_CONNECTION_ERROR,
-        callId
-      }
-    ],
-    // A standalone script without any dependencies.
-    // So we can not use imported / global statements here.
-    func: async function injectedFunction({
-      typeConnectionRequest,
-      typeConnectionError,
-      callId
-    }) {
-      if (!window.___debuggerPromise) {
-        let resolve, reject;
-        window.___debuggerPromise = new Promise(
-          (y, n) => ((resolve = y), (reject = n))
-        );
-        window.___debuggerPromise.resolve = resolve;
-        window.___debuggerPromise.reject = reject;
-      }
-      window.___debuggerPromise.resolve(async ({ secret } = {}) => {
-        return new Promise((resolve, reject) => {
-          const channel = new MessageChannel();
-          channel.port1.onmessage = function recieveResponse({ data }) {
-            if (data.callId !== callId) return; // It should never happen
-            // This is the response from the ISOLATED world. It happens once.
-            channel.port1.onmessage = null;
-            if (data.type === typeConnectionError) {
-              reject(new Error(data.message));
-            } else {
-              resolve(channel.port1);
-            }
-          };
-          // Send the pair port to the ISOLATED world.
-          // We will wait for the reply before returning.
-          // It guaranties us that connections to the background
-          // is already established.
-          window.postMessage(
-            {
-              type: typeConnectionRequest,
-              secret,
-              callId
-            },
-            '*',
-            [channel.port2]
-          );
-        });
-      });
+      window.postMessage({ type: typeExtensionReady }, '*');
     }
   });
 }
