@@ -17,17 +17,48 @@ function getMethods(obj, index = {}, prefix = '') {
   }
   return index;
 }
-
+function newId(prefix = 'id-') {
+  return `${prefix}${Date.now()}-${Math.random()}`;
+}
 const api = newExtensionApi();
 newConnectionHandler({
   onConnect: (port) => {
     const [register, cleanup] = newRegistry();
     const methods = getMethods(api);
     port.start();
+    
+    const listeners = {};
+    register(() => {
+      for (let remove of Object.values(listeners)) {
+        remove();
+      }
+      listeners = {};
+    })
+
     register(listenPort(port, async ({ method, args }) => {
       console.log('listenPort', method, args);
-      if (method === 'getMethods') {
-        return Object.keys(methods);
+      if (method === 'init') {
+        return {
+          methods : Object.keys(methods)
+        };
+      } else if (method === "done") {
+        cleanup();
+      } else if (method === 'addListener') {
+        const [eventMethodName] = args;
+        const id = newId('listener-');
+        listeners[id] = methods[eventMethodName](async (...callParams) => {
+          await callPort(port, {
+            method: 'notifyListener',
+            args: [id, ...callParams]
+          });
+        });
+        return id;
+      } else if (method === 'removeListener') {
+        const [listenerId] = args;
+        if (listeners[listenerId]) {
+          await listeners[listenerId]();
+          delete listeners[listenerId];
+        }
       } else {
         const fn = methods[method];
         if (typeof fn === 'function') {
