@@ -2,7 +2,7 @@ function wrapChromeApi(ns, methods) {
   return methods.reduce((api, method) => {
     if (method.startsWith('on')) {
       api[method] = (listener, ...args) => {
-        const handler = () => { listener(); }
+        const handler = (...params) => { listener(...params); }
         chrome[ns][method].addListener(handler, ...args);
         return () => chrome[ns][method].removeListener(handler);
       }

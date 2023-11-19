@@ -110,8 +110,16 @@
         urls,
         focusWindow
       }) {
+        const [register, cleanup] = newRegistry();
         const api = await connectToExtension({ secret });
         try {
+          register(await api.windows.onCreated((w) => {
+            console.log('A window created', w);
+          }))
+          register(await api.windows.onRemoved((w) => {
+            console.log('A window removed', w);
+          }))
+
           const win = await api.windows.create({
             url : 'about:blank',
             focused : focusWindow,
@@ -121,7 +129,7 @@
           try {
             document.querySelector("#screenshots").innerHTML = "";
             const tab = win.tabs[0];
-            console.log('A tab created', tab);
+            // console.log('A tab created', tab);
 
             for (let url of urls) {
               await api.tabs.update(tab.id, { url, active: true });
@@ -132,9 +140,11 @@
             }
           } finally {
             await api.windows.remove(win.id);
+            await new Promise(resolve => setTimeout(resolve, 300));
+            cleanup();
           }
         } finally{
-          await api.close();
+          // await api.close();
         }
       }
 

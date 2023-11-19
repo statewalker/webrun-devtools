@@ -1,8 +1,8 @@
 export function listenPort(port, handler) {
   const onMessage = async function callback(event) {
-    console.log('[listenPort] onMessage', event.data);
     if (event.data?.type !== 'request') return;
     const { callId, params } = event.data;
+    console.log('[listenPort]', callId, params);
     let result, error, type;
     try {
       result = await handler(params);
@@ -19,6 +19,7 @@ export function listenPort(port, handler) {
 
 export async function callPort(port, params, timeout = 1000) {
   const callId = `call-${Date.now()}-${String(Math.random()).substring(2)}`
+  console.log('[callPort]', callId, params);
   let timerId, onMessage;
   const promise = new Promise((resolve, reject) => {
     timerId = setTimeout(() => reject(new Error('Call timeout')), timeout);

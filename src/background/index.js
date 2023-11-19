@@ -34,7 +34,7 @@ newConnectionHandler({
     const [register, cleanup] = newRegistry();
     const methods = getMethods(api);
     port.start();
-    
+
     let listeners = {};
     register(() => {
       for (let remove of Object.values(listeners)) {
@@ -44,7 +44,6 @@ newConnectionHandler({
     })
 
     register(listenPort(port, async (data) => {
-      console.log('[listenPort] data', data)
       if (!data) {
         throw new Error("No data");
       }
@@ -56,19 +55,18 @@ newConnectionHandler({
       } else if (method === METHOD_DONE) {
         cleanup();
       } else if (method === METHOD_ADD_LISTENER) {
-        const [eventMethodName] = args;
+        const [listenerId, eventMethodName] = args;
         const fn = methods[eventMethodName];
         if (typeof fn === 'function') {
-          const id = newId('listener-');
-          listeners[id] = fn(async (...callParams) => {
+          listeners[listenerId] = fn(async (...callParams) => {
             await callPort(port, {
               method: METHOD_NOTIFY_LISTENER,
-              args: [id, ...callParams]
+              args: [listenerId, ...callParams]
             });
           });
-          return id;
+          return listenerId;
         } else {
-          throw new Error(`Unknown event listener "${eventMethodName}"}`);
+          throw new Error(`Unknown event listener. Name: "${eventMethodName}"; ListenerId: "${listenerId}".`);
         }
       } else if (method === METHOD_REMOVE_LISTENER) {
         const [listenerId] = args;
@@ -97,10 +95,3 @@ chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo) {
     secret
   });
 });
-
-// chrome.debugger.onEvent.addListener(function (source, method, params) {
-//   if (method === 'Network.responseReceived') {
-//     console.log('Response received:', params.response);
-//     // Perform your desired action with the response data
-//   }
-// });

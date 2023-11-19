@@ -21,7 +21,7 @@ export default async function connectPageToExtension({
   closeTimeout = 1000 * 5,
 }) {
   function newId(prefix = 'id-') {
-    return `${prefix}${Date.now()}-${Math.random()}`;
+    return `${prefix}${Date.now()}-${String(Math.random()).substring(2)}`;
   }
   let timerId, onMessage;
   const promise = new Promise((resolve, reject) => {
@@ -70,9 +70,9 @@ export default async function connectPageToExtension({
   const api = {};
   let listeners = {};
   register(() => {
-    for (let reg of Object.values(listeners)) {
-      if (typeof reg.remove === 'function') {
-        reg.remove();
+    for (let { listener, removeListener } of Object.values(listeners)) {
+      if (typeof removeListener === 'function') {
+        removeListener(listener);
       }
     }
     listeners = {};
@@ -95,24 +95,32 @@ export default async function connectPageToExtension({
     const path = name.split('_');
     let method;
     if (name.match(/_on[A-Z]/)) {
-      method = async (listener) => {
-        const listenerId = await callPort(port, {
-          method : METHOD_ADD_LISTENER,
-          args : [name],
-        })
-        const remove = async () => {
-          delete listeners[listenerId];
-          await callPort(port, {
-            method : METHOD_REMOVE_LISTENER,
-            args : [listenerId, name],
-          })
-        }
+      async function removeListener(listener) {
+        const listenerId = listener.__id;
+        delete listener.__id;
+        delete listeners[listenerId];
+        return await callPort(port, {
+          method : METHOD_REMOVE_LISTENER,
+          args : [listenerId, name],
+        });  
+      }
+      async function addListener(listener, ...args) {
+        const listenerId = listener.__id = newId('listener-');
         listeners[listenerId] = {
           listener,
-          remove
+          removeListener
         };
-        return remove;
+        return await callPort(port, {
+          method : METHOD_ADD_LISTENER,
+          args : [listenerId, name, ...args],
+        });
       }
+      method = async (listener) => {
+        await addListener(listener);
+        return register(() => removeListener(listener));
+      }
+      method.addListener = addListener;
+      method.removeListener = removeListener;
     } else{
       method = async (...args) => await callPort(port, {
         method : name,
@@ -121,17 +129,18 @@ export default async function connectPageToExtension({
     }
     set(api, path, method);
   }
-  // Let know to the extension that this connection and associated resources
-  // should be cleaned up
-  register(() => callPort(port, {
-    method : METHOD_DONE,
-    args : []
-  }));
-  register(() => setTimeout(() => port.close(), closeTimeout));
 
-  api.close = () => {
+  api.close = async () => {
     cleanup();
+    // Let know to the extension that this connection and associated resources
+    // should be cleaned up
+    await callPort(port, {
+      method : METHOD_DONE,
+      args : []
+    });
+    setTimeout(() => port.close(), closeTimeout);
   }
+  
   return api;
 
 }
