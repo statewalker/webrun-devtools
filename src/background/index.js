@@ -1,8 +1,8 @@
+import { newRegistry } from '@statewalker/utils';
 import {
   connectExtensionToPage,
   newConnectionHandler
 } from './connectExtensionToPage.js';
-import newRegistry from '../libs/newRegistry.js';
 import { loadSecret } from '../libs/secretsStore.js';
 import { newExtensionApi } from './newBackgroundApi.js';
 import { callPort, listenPort } from '../libs/portCalls.js';

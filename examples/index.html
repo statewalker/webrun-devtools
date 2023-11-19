@@ -63,8 +63,7 @@
       <div id="screenshots"></div>
     </main>
     <script type="module">
-      import connectToExtension from "../api/index.js";
-      import newRegistry from "../src/libs/newRegistry.js";
+      import connectToExtension, { newRegistry } from "../dist/index.js";
      
       Promise.resolve().then(main).catch(console.error);
 
@@ -148,7 +147,7 @@
           } finally {
             await api.windows.remove(win.id);
             await new Promise(resolve => setTimeout(resolve, 300));
-            // cleanup();
+            cleanup();
           }
         } finally{
           await api.close();

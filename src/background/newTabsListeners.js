@@ -1,4 +1,4 @@
-import newRegistry from '../libs/newRegistry.js';
+import { newRegistry } from '@statewalker/utils';
 
 export function newTabsListeners() {
   const tabs = {};

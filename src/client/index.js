@@ -1,6 +1,8 @@
-import { callPort, listenPort } from '../src/libs/portCalls.js';
-import { set } from '../src/libs/getset.js';
-import newRegistry from '../src/libs/newRegistry.js';
+import { newRegistry } from '@statewalker/utils';
+export { newRegistry };
+
+import { set } from '@statewalker/getset';
+import { callPort, listenPort } from '../libs/portCalls.js';
 import { 
   METHOD_DONE, 
   METHOD_INIT, 
@@ -12,7 +14,7 @@ import {
   TYPE_CONNECTION_REQUEST, 
   TYPE_CONNECTION_RESPONSE, 
   TYPE_EXTENSION_READY
-} from '../src/libs/constants.js';
+} from '../libs/constants.js';
 
 function newId(prefix = 'id-') {
   return `${prefix}${Date.now()}-${String(Math.random()).substring(2)}`;
@@ -152,5 +154,4 @@ export default async function connectPageToExtension({
   }
   
   return api;
-
 }

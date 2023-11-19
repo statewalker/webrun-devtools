@@ -1,4 +1,4 @@
-import newRegistry from '../libs/newRegistry.js';
+import { newRegistry } from '@statewalker/utils';
 import { 
   TYPE_CONTENT_CONNECTION,
   TYPE_CONNECTION_ERROR, 
@@ -57,10 +57,9 @@ export function newConnectionHandler({
         cleanAll();
       }
     };  
+    reg(onConnect(channel.port2, sender));
     reg(() => channel.port1.onmessage = null);
     reg(() => channel.port1.close());
-    reg(onConnect(channel.port2, sender));
-    reg(() => console.log('Disconnect 3'));
   };
   chrome.runtime.onConnect.addListener(connectionHandler);
   register(() => chrome.runtime.onConnect.removeListener(connectionHandler));
@@ -122,7 +121,7 @@ export async function connectExtensionToPage({
               channel.port1.postMessage(data);
             });
           }
-          await port.postMessage(data);
+          port.postMessage(data);
         }
         return channel.port2;
       }

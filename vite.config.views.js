@@ -5,9 +5,9 @@ export default defineConfig({
   plugins: [],
   root: resolve(__dirname, './src'),
   base : "./",
-  publicDir: resolve(__dirname, './public'),
+  publicDir: resolve(__dirname, './src/public'),
   build: {
-    outDir: resolve(__dirname, './dist'),
+    outDir: resolve(__dirname, './extension'),
     rollupOptions: {
       input: {
         popup: resolve(__dirname, './src/popup/index.html'),

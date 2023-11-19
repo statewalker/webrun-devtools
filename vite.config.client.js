@@ -6,12 +6,12 @@ export default defineConfig({
   root: resolve(__dirname, './src'),
   base : "./",
   build: {
-    outDir: resolve(__dirname, './extension/background'),
+    outDir: resolve(__dirname, './dist'),
     lib : {
-      entry: resolve(__dirname, './src/background/index.js'),
-      name: "background",
+      entry: resolve(__dirname, './src/client/index.js'),
+      name: "client",
       formats: ["es"],
       fileName: "index",
-    },
+    }
   },
 })
