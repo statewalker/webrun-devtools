@@ -2,9 +2,9 @@
   "manifest_version": 3,
   "name": "Debugger Extension",
   "description": "Demonstrates the API by attaching a debugger to a webpage and capturing network data.",
-  "version": "1.0",
+  "version": "0.0.1",
   "action": {
-    "default_icon": "./assets/bug.png",
+    "default_icon": "./bug.png",
     "default_popup": "./popup/index.html"
   },
   "permissions": [

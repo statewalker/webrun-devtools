@@ -12,11 +12,6 @@ import {
   METHOD_ADD_LISTENER,
   METHOD_REMOVE_LISTENER, 
   METHOD_NOTIFY_LISTENER, 
-
-  TYPE_CONNECTION_ERROR, 
-  TYPE_CONNECTION_REQUEST, 
-  TYPE_CONNECTION_RESPONSE, 
-  TYPE_EXTENSION_READY
 } from '../libs/constants.js';
 
 
@@ -48,7 +43,12 @@ newConnectionHandler({
       listeners = {};
     })
 
-    register(listenPort(port, async ({ method, args }) => {
+    register(listenPort(port, async (data) => {
+      console.log('[listenPort] data', data)
+      if (!data) {
+        throw new Error("No data");
+      }
+      const { method, args } = data;
       if (method === METHOD_INIT) {
         return {
           methods : Object.keys(methods)
@@ -57,14 +57,19 @@ newConnectionHandler({
         cleanup();
       } else if (method === METHOD_ADD_LISTENER) {
         const [eventMethodName] = args;
-        const id = newId('listener-');
-        listeners[id] = methods[eventMethodName](async (...callParams) => {
-          await callPort(port, {
-            method: METHOD_NOTIFY_LISTENER,
-            args: [id, ...callParams]
+        const fn = methods[eventMethodName];
+        if (typeof fn === 'function') {
+          const id = newId('listener-');
+          listeners[id] = fn(async (...callParams) => {
+            await callPort(port, {
+              method: METHOD_NOTIFY_LISTENER,
+              args: [id, ...callParams]
+            });
           });
-        });
-        return id;
+          return id;
+        } else {
+          throw new Error(`Unknown event listener "${eventMethodName}"}`);
+        }
       } else if (method === METHOD_REMOVE_LISTENER) {
         const [listenerId] = args;
         if (listeners[listenerId]) {

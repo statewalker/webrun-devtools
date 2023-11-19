@@ -27,38 +27,52 @@ export function newConnectionHandler({
 }) {
   const [register, cleanup] = newRegistry();
   const connectionHandler = (port) => {
-    if (port.name !== connectionType) return;
-    const { sender } = port;
-    const channel = new MessageChannel();
+    const portId = port.name || ''
+    if (portId.indexOf(connectionType) !== 0) {
+      port.disconnect();
+      return;
+    }
+    const { sender } = port; 
     const [reg, cln] = newRegistry();
+    const r = (action) => reg(async () => {
+      try {
+        await action();
+      } catch (error) {
+        console.error(error);
+      }
+    })
+    // const cleanAll = register(cln);
+    const cleanAll = cln;
+
+    port.onDisconnect.addListener(cleanAll);
+    r(() => port.onDisconnect.removeListener(cleanAll));
+
+    const channel = new MessageChannel();
     const onMessage = (data) => {
       try {
         channel.port1.postMessage(data);
       } catch (err) {
-        cln();
+        cleanAll();
       }
     }
     port.onMessage.addListener(onMessage);
-    reg(() => port.onMessage.removeListener(onMessage))
+    r(() => port.onMessage.removeListener(onMessage))
 
     channel.port1.onmessage = ({ data }) => {
       try {
         port.postMessage(data);
       } catch (err) {
-        cln();
+        cleanAll();
       }
-    };
-    reg(() => channel.port1.onmessage = null);
-    reg(() => channel.port1.close());
-    reg(() => channel.port2.close());
-
-    reg(onConnect(channel.port2, sender));
-
-    const cleanAll = reg(register(cln));
-    port.onDisconnect.addListener(cleanAll);
+    };  
+    r(() => channel.port1.onmessage = null);
+    r(() => channel.port1.close());
+    r(() => console.log('Release connection'));
+    r(onConnect(channel.port2, sender));
   };
   chrome.runtime.onConnect.addListener(connectionHandler);
   register(() => chrome.runtime.onConnect.removeListener(connectionHandler));
+  register(() => console.log('newConnectionHandler cleanup'));
   return cleanup;
 }
 
@@ -78,7 +92,6 @@ export async function connectExtensionToPage({
   tabId,
   secret
 }) {
- 
   // Set listeners for messages comming from the page.
   await chrome.scripting.executeScript({
     target: {
@@ -107,19 +120,6 @@ export async function connectExtensionToPage({
       typeConnectionError,
       secret
     }) {
-      let port;
-      async function checkBackgroundConnectionPort(channelPort) {
-        if (!port) {
-          port = await chrome.runtime.connect({ name: connectionType });
-          port.onDisconnect.addListener(() => (port = null));
-          port.onMessage.addListener((data) => channelPort.postMessage(data));
-          channelPort.onmessage = async ({ data }) => {
-            const port = await checkBackgroundConnectionPort(channelPort);
-            port.postMessage(data);
-          };
-        }
-        return port;
-      }
       window.addEventListener('message', async function messageListener(ev) {
         const { data } = ev;
         let responseData, responsePort;
@@ -128,7 +128,19 @@ export async function connectExtensionToPage({
           if (data?.secret === secret) {
             const channel = new MessageChannel();
             responsePort = channel.port2;
-            await checkBackgroundConnectionPort(channel.port1);
+            const channelPort = channel.port1;
+            const portName = `${connectionType}-${callId}`;
+            let port;
+            channelPort.onmessage = async ({ data }) => {
+              if (!port) {
+                port = await chrome.runtime.connect({ name: portName });
+                port.onMessage.addListener((d) => {
+                  channelPort.postMessage(d);
+                });
+                port.onDisconnect.addListener(() => port = null);
+              }
+              port.postMessage(data);
+            }
             responseData = { type: typeConnectionResponse, callId };
           } else {
             const message =

@@ -1,0 +1,13 @@
+{
+  "env": {
+    "__DEV__": "true"
+  },
+  "watch": [
+    "src", "vite.config.background.js", "vite.config.views.js"
+  ],
+  "ext": "js,tsx,css,html,ts,json",
+  "ignore": [
+    "src/**/*.spec.ts"
+  ],
+  "exec": "vite build --config ./vite.config.views.js && vite build --config ./vite.config.background.js"
+}

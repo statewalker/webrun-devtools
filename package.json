@@ -1,0 +1,17 @@
+{
+  "name": "@statewalker/webrun-devtools",
+  "description": "DevTools Extension for the StateWalker WebRun framework",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc && nodemon",
+    "build": "tsc && vite build --config ./vite.config.views.js && vite build --config ./vite.config.background.js",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "vite": "^5.0.0",
+    "nodemon": "^3.0.1"
+  }
+}

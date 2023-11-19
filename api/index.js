@@ -1,6 +1,6 @@
-import { callPort, listenPort } from '../libs/portCalls.js';
-import { set } from '../libs/getset.js';
-import newRegistry from '../libs/newRegistry.js';
+import { callPort, listenPort } from '../src/libs/portCalls.js';
+import { set } from '../src/libs/getset.js';
+import newRegistry from '../src/libs/newRegistry.js';
 import { 
   METHOD_DONE, 
   METHOD_INIT, 
@@ -12,7 +12,7 @@ import {
   TYPE_CONNECTION_REQUEST, 
   TYPE_CONNECTION_RESPONSE, 
   TYPE_EXTENSION_READY
-} from '../libs/constants.js';
+} from '../src/libs/constants.js';
 
 export default async function connectPageToExtension({
   secret, 
@@ -43,14 +43,11 @@ export default async function connectPageToExtension({
       if (data?.type === TYPE_EXTENSION_READY) {
         requestConnection();
       } else if (data?.callId === callId) {
+        resolved = true;
         if (data?.type === TYPE_CONNECTION_ERROR) {
-          window.removeEventListener('message', onMessage);
           reject(new Error(data.message));
-          resolved = true;
         } else if (data.type === TYPE_CONNECTION_RESPONSE) {
-          window.removeEventListener('message', onMessage);
           resolve(ports[0]);
-          resolved = true;
         }
       }
     }
@@ -73,13 +70,15 @@ export default async function connectPageToExtension({
   const api = {};
   let listeners = {};
   register(() => {
-    for (let { remove } of Object.values(listeners)) {
-      remove();
+    for (let reg of Object.values(listeners)) {
+      if (typeof reg.remove === 'function') {
+        reg.remove();
+      }
     }
     listeners = {};
   })
 
-  register(listenPort(port, async ({ method, args }) => {
+  const cleanupPort = listenPort(port, async ({ method, args } = {}) => {
     if (method === METHOD_NOTIFY_LISTENER) {
       const [listenerId, ...params] = args;
       const { listener } = listeners[listenerId] || {};
@@ -89,7 +88,8 @@ export default async function connectPageToExtension({
     } else {
       throw new Error(`Unknown method "${method}"}`);
     }
-  }));
+  });
+  register(cleanupPort);
 
   for (let name of methods) {
     const path = name.split('_');
@@ -121,15 +121,17 @@ export default async function connectPageToExtension({
     }
     set(api, path, method);
   }
-  api.close = async () => {
-   cleanup(); 
-    await callPort(port, {
-      method : METHOD_DONE,
-      args : []
-    });
-    setTimeout(() => port.close(), closeTimeout)
+  // Let know to the extension that this connection and associated resources
+  // should be cleaned up
+  register(() => callPort(port, {
+    method : METHOD_DONE,
+    args : []
+  }));
+  register(() => setTimeout(() => port.close(), closeTimeout));
+
+  api.close = () => {
+    cleanup();
   }
-  // register(() => port.close());
   return api;
 
 }
