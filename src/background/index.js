@@ -18,7 +18,7 @@ import {
 function getMethods(obj, index = {}, prefix = '') {
   for (const key in obj) {
     if (typeof obj[key] === 'object') {
-      getMethods(obj[key], index, `${prefix}${key}_`);
+      getMethods(obj[key], index, `${prefix}${key}.`);
     } else {
       index[`${prefix}${key}`] = obj[key];
     }

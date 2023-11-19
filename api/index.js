@@ -14,15 +14,14 @@ import {
   TYPE_EXTENSION_READY
 } from '../src/libs/constants.js';
 
-export default async function connectPageToExtension({
+function newId(prefix = 'id-') {
+  return `${prefix}${Date.now()}-${String(Math.random()).substring(2)}`;
+}
+
+async function openPortToExtension({
   secret, 
-  timeout = 1000 * 5,
-  callTimeout = 1000 * 60 * 5,
-  closeTimeout = 1000 * 5,
+  timeout = 1000 * 5
 }) {
-  function newId(prefix = 'id-') {
-    return `${prefix}${Date.now()}-${String(Math.random()).substring(2)}`;
-  }
   let timerId, onMessage;
   const promise = new Promise((resolve, reject) => {
     timerId = setTimeout(() => 
@@ -59,6 +58,17 @@ export default async function connectPageToExtension({
 
   const port = await promise;
   port.start();
+  return port;
+}
+
+
+export default async function connectPageToExtension({
+  secret, 
+  timeout = 1000 * 5,
+  callTimeout = 1000 * 60 * 5,
+  closeTimeout = 1000 * 5,
+}) {
+  const port = await openPortToExtension({ secret, timeout });
 
   const [register, cleanup] = newRegistry();
 
@@ -92,9 +102,9 @@ export default async function connectPageToExtension({
   register(cleanupPort);
 
   for (let name of methods) {
-    const path = name.split('_');
+    const path = name.split('.');
     let method;
-    if (name.match(/_on[A-Z]/)) {
+    if (name.match(/\.on[A-Z]/)) {
       async function removeListener(listener) {
         const listenerId = listener.__id;
         delete listener.__id;

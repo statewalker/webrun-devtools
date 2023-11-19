@@ -113,12 +113,19 @@
         const [register, cleanup] = newRegistry();
         const api = await connectToExtension({ secret });
         try {
-          register(await api.windows.onCreated((w) => {
+          const onCreated = (w) => {
             console.log('A window created', w);
-          }))
-          register(await api.windows.onRemoved((w) => {
+          }
+          api.windows.onCreated.addListener(onCreated);
+          register(() => api.windows.onCreated.removeListener(onCreated));
+          // register(await api.windows.onCreated(onCreated))
+
+          const onRemoved = (w) => {
             console.log('A window removed', w);
-          }))
+          };
+          api.windows.onRemoved.addListener(onRemoved);
+          register(() => api.windows.onRemoved.removeListener(onRemoved));
+          // register(await api.windows.onRemoved(onRemoved))
 
           const win = await api.windows.create({
             url : 'about:blank',
@@ -141,10 +148,10 @@
           } finally {
             await api.windows.remove(win.id);
             await new Promise(resolve => setTimeout(resolve, 300));
-            cleanup();
+            // cleanup();
           }
         } finally{
-          // await api.close();
+          await api.close();
         }
       }
 
