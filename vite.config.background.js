@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [],
   root: resolve(__dirname, './src'),
   base : "./",
+  publicDir: false,
   build: {
     outDir: resolve(__dirname, './extension/background'),
     lib : {
