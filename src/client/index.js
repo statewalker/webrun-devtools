@@ -9,6 +9,7 @@ import {
   METHOD_ADD_LISTENER,
   METHOD_REMOVE_LISTENER, 
   METHOD_NOTIFY_LISTENER, 
+  METHOD_RESET_CONNECTION,
 
   TYPE_CONNECTION_ERROR, 
   TYPE_CONNECTION_REQUEST, 
@@ -24,6 +25,15 @@ async function openPortToExtension({
   apiKey, 
   timeout = 1000 * 5
 }) {
+  await new Promise((resolve) => {
+    const finish = () => setTimeout(resolve, 10);
+    if (document.readyState === 'complete') {
+      finish();
+    } else {
+      document.addEventListener('DOMContentLoaded', finish);
+    }
+  })
+  console.log('[openPortToExtension]', { apiKey, timeout })
   let timerId, onMessage;
   const promise = new Promise((resolve, reject) => {
     timerId = setTimeout(() => 
@@ -74,11 +84,6 @@ export default async function connectPageToExtension({
 
   const [register, cleanup] = newRegistry();
 
-  const { methods } = await callPort(port, {
-    method: METHOD_INIT,
-    args : []
-  });
-
   const api = {};
   let listeners = {};
   register(() => {
@@ -90,6 +95,7 @@ export default async function connectPageToExtension({
     listeners = {};
   })
 
+  let connected = false;
   const cleanupPort = listenPort(port, async ({ method, args } = {}) => {
     if (method === METHOD_NOTIFY_LISTENER) {
       const [listenerId, ...params] = args;
@@ -97,12 +103,42 @@ export default async function connectPageToExtension({
       if (listener) {
         return await listener(...params);
       }
+    } else if (method === METHOD_RESET_CONNECTION) {
+      // This method is called by the injected script when the connection
+      // with the background is lost.
+      connected = false;
     } else {
       throw new Error(`Unknown method "${method}"}`);
     }
   });
   register(cleanupPort);
 
+  async function _initCall() {
+    // List of listeners to re-initialize in the background script
+    const listenersList = Object.entries(listeners).map(([listenerId, { listenerMethodName }]) => {
+      return [listenerId, listenerMethodName];
+    });
+    const result = await callPort(port, {
+      method : METHOD_INIT,
+      args : [{
+        apiKey,
+        listeners : listenersList
+      }]
+    }, callTimeout);
+    connected = true;
+    return result;
+  }
+  async function _call(method, ...args) {
+    if (!connected) {
+      await _initCall();
+    }
+    return await callPort(port, {
+      method,
+      args
+    }, callTimeout)
+  }
+
+  const { methods } = await _initCall();
   for (let name of methods) {
     const path = name.split('.');
     let method;
@@ -111,21 +147,16 @@ export default async function connectPageToExtension({
         const listenerId = listener.__id;
         delete listener.__id;
         delete listeners[listenerId];
-        return await callPort(port, {
-          method : METHOD_REMOVE_LISTENER,
-          args : [listenerId, name],
-        });  
+        return await _call(METHOD_REMOVE_LISTENER, listenerId, name);  
       }
       async function addListener(listener, ...args) {
         const listenerId = listener.__id = newId('listener-');
         listeners[listenerId] = {
           listener,
-          removeListener
+          removeListener,
+          listenerMethodName : name
         };
-        return await callPort(port, {
-          method : METHOD_ADD_LISTENER,
-          args : [listenerId, name, ...args],
-        });
+        return await _call(METHOD_ADD_LISTENER, listenerId, name, ...args);
       }
       method = async (listener) => {
         await addListener(listener);
@@ -134,10 +165,7 @@ export default async function connectPageToExtension({
       method.addListener = addListener;
       method.removeListener = removeListener;
     } else{
-      method = async (...args) => await callPort(port, {
-        method : name,
-        args
-      }, callTimeout);
+      method = async (...args) => await _call(name, ...args);
     }
     set(api, path, method);
   }
@@ -146,10 +174,7 @@ export default async function connectPageToExtension({
     cleanup();
     // Let know to the extension that this connection and associated resources
     // should be cleaned up
-    await callPort(port, {
-      method : METHOD_DONE,
-      args : []
-    });
+    await _call(METHOD_DONE);
     setTimeout(() => port.close(), closeTimeout);
   }
   

@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsc && nodemon",
     "zip": "yarn build && cd ./dist/extension && zip -r ../extension.zip *",
-    "build": "tsc && vite build --config ./vite.config.views.js && vite build --config ./vite.config.background.js && vite build --config ./vite.config.api.js"
+    "build": "tsc && vite build --config ./vite.config.views.js && vite build --config ./vite.config.content.js && vite build --config ./vite.config.background.js && vite build --config ./vite.config.api.js"
   },
   "devDependencies": {
     "@statewalker/utils": "^0.4.2",

@@ -22,12 +22,12 @@ import {
  * @returns {function} cleanup function removing all listeners
  */
 export function newConnectionHandler({
-  connectionType = TYPE_CONTENT_CONNECTION,
   onConnect
 }) {
   const [register, cleanup] = newRegistry();
   const connectionHandler = (port) => {
-    if (port.name !== connectionType) {
+    const name = port.name;
+    if (name.indexOf(TYPE_CONTENT_CONNECTION) !== 0) {
       port.disconnect();
       return;
     }
@@ -110,6 +110,7 @@ export async function connectExtensionToPage({
       typeConnectionError,
       apiKey
     }) {
+    
       function newPortToBackground() {
         let port;
         const channel = new MessageChannel();
@@ -126,6 +127,7 @@ export async function connectExtensionToPage({
         return channel.port2;
       }
 
+      console.log('[injectedFunction]');
       window.addEventListener('message', async function messageListener(ev) {
         const { data } = ev;
         let responseData, responsePort;

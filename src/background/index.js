@@ -1,9 +1,5 @@
 import { newRegistry } from '@statewalker/utils';
-import {
-  connectExtensionToPage,
-  newConnectionHandler
-} from './connectExtensionToPage.js';
-import { loadApiKey } from '../libs/apiKeysStore.js';
+import { newConnectionHandler } from './connectExtensionToPage.js';
 import { newExtensionApi } from './newBackgroundApi.js';
 import { callPort, listenPort } from '../libs/portCalls.js';
 import { 
@@ -13,6 +9,7 @@ import {
   METHOD_REMOVE_LISTENER, 
   METHOD_NOTIFY_LISTENER, 
 } from '../libs/constants.js';
+import { loadApiKey } from '../libs/apiKeysStore.js';
 
 
 function getMethods(obj, index = {}, prefix = '') {
@@ -25,9 +22,12 @@ function getMethods(obj, index = {}, prefix = '') {
   }
   return index;
 }
-function newId(prefix = 'id-') {
-  return `${prefix}${Date.now()}-${Math.random()}`;
+
+async function validateApiKey(key) {
+  const apiKey = await loadApiKey();
+  return key === apiKey;
 }
+
 const api = newExtensionApi();
 newConnectionHandler({
   onConnect: (port) => {
@@ -35,7 +35,46 @@ newConnectionHandler({
     const methods = getMethods(api);
     port.start();
 
+    async function initializeConnection(apiKey, listeners) {
+      if (!await validateApiKey(apiKey)) { 
+        const message =
+          'The page is not authorized to establish connection with this extension.';
+        throw new Error(message);
+      } else {
+        for (let [listenerId, eventMethodName] of listeners) {
+          await addListener(listenerId, eventMethodName);
+        }
+        initialized = true;
+      }
+      return {
+        methods : Object.keys(methods)
+      };  
+    }
+
+    async function addListener(listenerId, eventMethodName) {
+      const fn = methods[eventMethodName];
+      if (typeof fn === 'function') {
+        listeners[listenerId] = fn(async (...callParams) => {
+          await callPort(port, {
+            method: METHOD_NOTIFY_LISTENER,
+            args: [listenerId, ...callParams]
+          });
+        });
+        return listenerId;
+      } else {
+        throw new Error(`Unknown event listener. Name: "${eventMethodName}"; ListenerId: "${listenerId}".`);
+      }  
+    }
+
+    async function removeListener(listenerId) {
+      if (listeners[listenerId]) {
+        await listeners[listenerId]();
+        delete listeners[listenerId];
+      }
+    }
+
     let listeners = {};
+    let initialized = false;
     register(() => {
       for (let remove of Object.values(listeners)) {
         remove();
@@ -49,31 +88,20 @@ newConnectionHandler({
       }
       const { method, args } = data;
       if (method === METHOD_INIT) {
-        return {
-          methods : Object.keys(methods)
-        };
-      } else if (method === METHOD_DONE) {
+        const { apiKey, listeners = [] } = args[0] || {};
+        return await initializeConnection(apiKey, listeners);
+      } 
+      if (!initialized) {
+        throw new Error(`The API was not initialized. Method: "${method}"`);
+      }
+      if (method === METHOD_DONE) {
         cleanup();
       } else if (method === METHOD_ADD_LISTENER) {
         const [listenerId, eventMethodName] = args;
-        const fn = methods[eventMethodName];
-        if (typeof fn === 'function') {
-          listeners[listenerId] = fn(async (...callParams) => {
-            await callPort(port, {
-              method: METHOD_NOTIFY_LISTENER,
-              args: [listenerId, ...callParams]
-            });
-          });
-          return listenerId;
-        } else {
-          throw new Error(`Unknown event listener. Name: "${eventMethodName}"; ListenerId: "${listenerId}".`);
-        }
+        return await addListener(listenerId, eventMethodName);
       } else if (method === METHOD_REMOVE_LISTENER) {
         const [listenerId] = args;
-        if (listeners[listenerId]) {
-          await listeners[listenerId]();
-          delete listeners[listenerId];
-        }
+        return await removeListener(listenerId);;
       } else {
         const fn = methods[method];
         if (typeof fn === 'function') {
@@ -87,11 +115,12 @@ newConnectionHandler({
   }
 });
 
-chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo) {
-  if (changeInfo.status !== 'complete') return;
-  const apiKey = await loadApiKey();
-  const cleanup = connectExtensionToPage({
-    tabId,
-    apiKey
-  });
-});
+// chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo) {
+//   console.log('[chrome.tabs.onUpdated]', changeInfo)
+//   if (changeInfo.status !== 'complete') return;
+//   const apiKey = await loadApiKey();
+//   const cleanup = connectExtensionToPage({
+//     tabId,
+//     apiKey
+//   });
+// });
