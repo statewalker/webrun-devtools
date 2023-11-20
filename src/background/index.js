@@ -3,7 +3,7 @@ import {
   connectExtensionToPage,
   newConnectionHandler
 } from './connectExtensionToPage.js';
-import { loadSecret } from '../libs/secretsStore.js';
+import { loadApiKey } from '../libs/apiKeysStore.js';
 import { newExtensionApi } from './newBackgroundApi.js';
 import { callPort, listenPort } from '../libs/portCalls.js';
 import { 
@@ -89,9 +89,9 @@ newConnectionHandler({
 
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo) {
   if (changeInfo.status !== 'complete') return;
-  const secret = await loadSecret();
+  const apiKey = await loadApiKey();
   const cleanup = connectExtensionToPage({
     tabId,
-    secret
+    apiKey
   });
 });

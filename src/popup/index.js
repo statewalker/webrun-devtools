@@ -1,33 +1,33 @@
-import { loadSecret, storeSecret } from "../libs/secretsStore.js";
+import { loadApiKey, storeApiKey } from "../libs/apiKeysStore.js";
 
 onLoad(main);
 
 async function main() {
-  const input = document.querySelector("#input-secret");
+  const input = document.querySelector("#input-apiKey");
   const btnSave = document.querySelector("#btn-save");
   const btnGenerate = document.querySelector("#btn-generate");
 
-  let prevSecret = await loadSecret();
-  input.value = prevSecret;
-  updateSaveButton(prevSecret);
+  let prevApiKey = await loadApiKey();
+  input.value = prevApiKey;
+  updateSaveButton(prevApiKey);
 
-  function updateSaveButton(secret) {
-    const updated = (prevSecret !== secret);  
+  function updateSaveButton(apiKey) {
+    const updated = (prevApiKey !== apiKey);  
     btnSave.disabled = !updated;
   }
   input.addEventListener("input", async (ev) => {
     updateSaveButton(ev.target.value);
   });
   btnSave.addEventListener("click", async (ev) => {
-    const secret = input.value;
-    await storeSecret(secret);
-    prevSecret = secret;
-    updateSaveButton(secret);
+    const apiKey = input.value;
+    await storeApiKey(apiKey);
+    prevApiKey = apiKey;
+    updateSaveButton(apiKey);
   });
   btnGenerate.addEventListener("click", async (ev) => {
-    const secret = Math.random().toString(36).slice(2);
-    input.value = secret;
-    updateSaveButton(secret);
+    const apiKey = Math.random().toString(36).slice(2);
+    input.value = apiKey;
+    updateSaveButton(apiKey);
   });  
 }
 

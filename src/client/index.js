@@ -21,14 +21,14 @@ function newId(prefix = 'id-') {
 }
 
 async function openPortToExtension({
-  secret, 
+  apiKey, 
   timeout = 1000 * 5
 }) {
   let timerId, onMessage;
   const promise = new Promise((resolve, reject) => {
     timerId = setTimeout(() => 
       reject(
-        new Error('Connection timeout. Please check that the debugger extension is active.')
+        new Error('Connection timeout. Please check that the WebRun DevTools browser extension is active.')
       ),
       timeout
     );
@@ -36,7 +36,7 @@ async function openPortToExtension({
     const callId = newId('call-');
     function requestConnection() {
       if (resolved) return;
-      window.postMessage({ type: TYPE_CONNECTION_REQUEST, secret, callId }, '*');
+      window.postMessage({ type: TYPE_CONNECTION_REQUEST, apiKey, callId }, '*');
     }  
     onMessage = (event) => {
       if (event.source !== window) return;
@@ -65,12 +65,12 @@ async function openPortToExtension({
 
 
 export default async function connectPageToExtension({
-  secret, 
+  apiKey, 
   timeout = 1000 * 5,
   callTimeout = 1000 * 60 * 5,
   closeTimeout = 1000 * 5,
 }) {
-  const port = await openPortToExtension({ secret, timeout });
+  const port = await openPortToExtension({ apiKey, timeout });
 
   const [register, cleanup] = newRegistry();
 

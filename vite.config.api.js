@@ -5,13 +5,14 @@ export default defineConfig({
   plugins: [],
   root: resolve(__dirname, './src'),
   base : "./",
+  publicDir: false,
   build: {
-    outDir: resolve(__dirname, './dist'),
+    outDir: resolve(__dirname, './dist/'),
     lib : {
       entry: resolve(__dirname, './src/client/index.js'),
       name: "client",
       formats: ["es"],
-      fileName: "index",
+      fileName: "webrun-devtools",
     }
   },
 })

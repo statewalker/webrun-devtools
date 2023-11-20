@@ -7,7 +7,7 @@ export default defineConfig({
   base : "./",
   publicDir: resolve(__dirname, './src/public'),
   build: {
-    outDir: resolve(__dirname, './extension'),
+    outDir: resolve(__dirname, './dist/extension'),
     rollupOptions: {
       input: {
         popup: resolve(__dirname, './src/popup/index.html'),

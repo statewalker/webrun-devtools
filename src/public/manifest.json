@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Debugger Extension",
+  "name": "WebRun DevTools",
   "description": "Demonstrates the API by attaching a debugger to a webpage and capturing network data.",
   "version": "0.0.1",
   "action": {

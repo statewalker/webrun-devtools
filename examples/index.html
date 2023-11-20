@@ -77,17 +77,17 @@
           'https://webdriver.io/',
         ]
 
-        let secret;
+        let apiKey;
         const btn = document.querySelector("#btn-run");
         const focusCheckbox = document.querySelector("#focus-window");
         const textarea = document.querySelector("#urls");
         textarea.value = initialUrls.join('\n');
         btn.addEventListener("click", async (ev) => {
           ev.preventDefault();
-          if (!secret) {
-            secret = await prompt("Enter the debugger secret:", "SW_DEBUGGER_KEY_CHANGE_ME");
-            if (!secret) {
-              document.querySelector("#screenshots").innerHTML = "No secret provided. Reload the page to try again.";
+          if (!apiKey) {
+            apiKey = await prompt("Enter the WebRun DevTools apiKey:", "SW_DEBUGGER_KEY_CHANGE_ME");
+            if (!apiKey) {
+              document.querySelector("#screenshots").innerHTML = "No apiKey provided. Reload the page to try again.";
               return;
             }
           }
@@ -97,7 +97,7 @@
             .map(url => url.trim())
             .filter(Boolean);
           run({
-            secret,
+            apiKey,
             urls,
             focusWindow
           });
@@ -105,12 +105,12 @@
       }
 
       async function run({
-        secret,
+        apiKey,
         urls,
         focusWindow
       }) {
         const [register, cleanup] = newRegistry();
-        const api = await connectToExtension({ secret });
+        const api = await connectToExtension({ apiKey });
         try {
           const onCreated = (w) => {
             console.log('A window created', w);

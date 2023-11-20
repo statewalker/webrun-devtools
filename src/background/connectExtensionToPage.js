@@ -73,14 +73,14 @@ export function newConnectionHandler({
  * @param {number} options.connectionType name of the connection;
  * the same value as used in the #newConnectionHandler method
  * @param {number} options.tabId tab identifier
- * @param {string} options.secret secret used to check that the page is authorized
+ * @param {string} options.apiKey apiKey used to check that the page is authorized
  * to establish connection with this extension
  * @returns {function} cleanup function
  */
 export async function connectExtensionToPage({
   connectionType = TYPE_CONTENT_CONNECTION,
   tabId,
-  secret
+  apiKey
 }) {
   // Set listeners for messages comming from the page.
   await chrome.scripting.executeScript({
@@ -97,7 +97,7 @@ export async function connectExtensionToPage({
         typeConnectionRequest: TYPE_CONNECTION_REQUEST,
         typeConnectionResponse: TYPE_CONNECTION_RESPONSE,
         typeConnectionError: TYPE_CONNECTION_ERROR,
-        secret
+        apiKey
       }
     ],
     // A standalone script without any dependencies.
@@ -108,7 +108,7 @@ export async function connectExtensionToPage({
       typeConnectionRequest,
       typeConnectionResponse,
       typeConnectionError,
-      secret
+      apiKey
     }) {
       function newPortToBackground() {
         let port;
@@ -131,7 +131,7 @@ export async function connectExtensionToPage({
         let responseData, responsePort;
         if (data?.type === typeConnectionRequest) {
           const { callId } = data;
-          if (data?.secret === secret) {
+          if (data?.apiKey === apiKey) {
             responsePort = newPortToBackground();
             responseData = { type: typeConnectionResponse, callId };
           } else {
