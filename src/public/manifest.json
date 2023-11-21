@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "WebRun DevTools",
   "description": "Demonstrates the API by attaching a debugger to a webpage and capturing network data.",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "action": {
     "default_icon": "./bug.png",
     "default_popup": "./popup/index.html"
