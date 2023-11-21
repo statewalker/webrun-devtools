@@ -19,30 +19,92 @@
       #screenshots .label {
         text-align: center;
       }
+
+      form .form-input {
+        width: 500px;
+        margin-bottom: 1em;
+        display: flex;
+        align-items: flex-start;
+        align-content: stratch;
+      }
+      form .form-input label {
+       width: 12em; 
+      }
+      form .form-input textarea {
+        width: 100%;
+      }
+
     </style>
   </head>
   <body>
     <main>
-      <h1>Example 2: Screenshots Of Multiple Pages</h1>
-      <p>This page automatically creates screenshots of external sites.</p>
-
+      <h1>
+        Example 3: Screenshots Using the 
+        <a href="https://developer.chrome.com/docs/extensions/reference/debugger/" target="_blank">
+          Debugger API
+        </a>
+      </h1>
+      <p>This page automatically creates screenshots of external sites using 
+        the 
+        <a href="https://developer.chrome.com/docs/extensions/reference/debugger/" target="_blank">
+         Chrome Debugger API
+        </a>.
+        It will show a top panel announcing that the browser is controlled by an extension
+        in the debugger mode.
+      </p>
+      
+      <form>
+        <div class="form-input">
+          <label for="urls">Sites URLs:</label>
+          <textarea name="urls" id="urls" rows="10" columns="50"></textarea>
+        </div>
+        <div class="form-input">
+          <button id="btn-run">Make Screenshots</button>
+        </div>
+      </form>
       <div id="screenshots"></div>
     </main>
+    
     <script type="module">
       import connectToExtension from "../dist/webrun-devtools.js";
      
       Promise.resolve().then(main).catch(console.error);
+
       async function main() {
-        const apiKey = await prompt("Enter the debugger apiKey:", "SW_API_KEY_CHANGE_ME");
-        const urls = [
+        const initialUrls = [
           'https://svelte.dev/',
           'https://astro.build',
           'https://react.dev/',
           'https://www.solidjs.com/',
           'https://vuejs.org/',
           'https://webdriver.io/',
-        ];
+        ]
 
+        let apiKey;
+        const btn = document.querySelector("#btn-run");
+        const textarea = document.querySelector("#urls");
+        textarea.value = initialUrls.join('\n');
+        btn.addEventListener("click", async (ev) => {
+          ev.preventDefault();
+          if (!apiKey) {
+            apiKey = await prompt("Enter the WebRun DevTools apiKey:", "SW_API_KEY_CHANGE_ME");
+            if (!apiKey) {
+              document.querySelector("#screenshots").innerHTML = "No apiKey provided. Reload the page to try again.";
+              return;
+            }
+          }
+          const urls = (textarea.value || '')
+            .split('\n')
+            .map(url => url.trim())
+            .filter(Boolean);
+          run({
+            apiKey,
+            urls
+          });
+        });
+      }
+
+      async function run({ apiKey, urls, focusWindow}) {
         const api = await connectToExtension({
           apiKey
         });
