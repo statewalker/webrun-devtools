@@ -1,0 +1,24 @@
+@import "open-props/open-props.min.css";
+@import "open-props/normalize.min.css";
+@import "open-props/buttons.min.css";
+
+body {
+  padding: var(--size-fluid-3);
+  width: var(--size-content-2);
+}
+
+h1 {
+  font-size: var(--font-size-fluid-2);
+}
+
+.form-group {
+  display: flex;
+  align-items: center;
+  gap: var(--size-fluid-1);
+  margin: var(--size-fluid-1) 0;
+}
+
+.form-comment {
+  font-size: var(--font-size-fluid-0);
+  color: var(--gray-6);
+}

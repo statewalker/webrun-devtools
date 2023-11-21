@@ -29,6 +29,7 @@
     "@statewalker/utils": "^0.4.2",
     "idb-keyval": "^6.2.1",
     "nodemon": "^3.0.1",
+    "open-props": "^1.6.12",
     "typescript": "^5.2.2",
     "vite": "^5.0.0"
   },

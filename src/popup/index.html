@@ -4,19 +4,20 @@
   <meta charset="UTF-8">
   <base target="_blank">
   <title>Popup</title>
+  <link rel="stylesheet" type="text/css" href="./index.css" />
 </head>
-<body style="min-width: 100px">
-  <h3>WebRun DevTools API Keys</h3>
+<body>
+  <h1>WebRun DevTools</h1>
   <div>
-    <label>
-      <span>API Key:</span>
-      <div>
-        <input id="input-apiKey" type="text" value="" />
-      </div>
-      <div>Note: the API will not work without this key</div>
-    </label>
-    <button id="btn-save">Save</button>
-    <button id="btn-generate">Generate</button>
+    <div class="form-group">
+      <label for="input-apiKey">API Key:</label>
+      <input id="input-apiKey" type="text" value="" />
+    </div>
+    <div class="form-comment">Note: the DevTools API will not work without this key</div>
+    <div class="form-group">
+      <button id="btn-save" type="submit">Save</button>
+      <button id="btn-generate">Generate</button>
+    </div>
   </div>
   <script type="module" src="./index.js"></script>
 </body>
