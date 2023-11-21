@@ -24,16 +24,14 @@
       form .form-input {
         width: 500px;
         margin-bottom: 1em;
+        display: flex;
+        align-items: flex-start;
         align-content: stratch;
       }
       form .form-input label {
-        display: flex;
-        align-items: flex-start;
-      }
-      form .form-input label span {
        width: 12em; 
       }
-      form .form-input label textarea {
+      form .form-input textarea {
         width: 100%;
       }
 
@@ -41,20 +39,28 @@
   </head>
   <body>
     <main>
-      <h1>Screen-Shooter</h1>
-      <p>This page automatically creates screenshots of external sites.</p>
+      <h1>WebRun DevTools</h1>
+      <p><em>Pilot Browser from the Browser</em></p>
+      <h2>Example 2: Multi-site Screenshots</h2>
+
+      <p>This page uses the 
+        <a href="https://github.com/statewalker/webrun-devtools" target="_blank">WebRun DevTools</a> 
+        extension and the corresponding API to 
+        create automatically screenshots of multiple sites.
+      </p>
+      <p>
+        Please install the extension as described on the 
+        <a href="https://github.com/statewalker/webrun-devtools" target="_blank">extension page</a> and 
+        generate an API key.
+      </p>
       <form>
         <div class="form-input">
-          <label>
-            <span>Sites URLs:</span>
-            <textarea name="urls" id="urls" rows="10" columns="50"></textarea>
-          </label>
+          <label for="urls">Sites URLs:</label>
+          <textarea name="urls" id="urls" rows="10" columns="50"></textarea>
         </div>
         <div class="form-input">
-          <label>
-            <span>Focus window:</span>
-            <input type="checkbox" name="focus-window" id="focus-window" />
-          </label>
+          <label for="focus-window">Focus window:</label>
+          <input type="checkbox" name="focus-window" id="focus-window" />
         </div>
         <div class="form-input">
           <button id="btn-run">Make Screenshots</button>

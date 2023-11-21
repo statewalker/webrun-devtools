@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Titre de la page</title>
+    <style>
+      main {
+        margin: auto;
+        max-width: 1000px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>WebRun DevTools</h1>
+      <p><em>Pilot Browser from the Browser</em></p>
+      <h2>Example 1: Site Screenshot</h2>
+
+      <p>This page uses the 
+        <a href="https://github.com/statewalker/webrun-devtools" target="_blank">WebRun DevTools</a> 
+        extension and the corresponding API to 
+        create automatically a site screenshot.
+      </p>
+      <p>
+        Please install the extension as described on the 
+        <a href="https://github.com/statewalker/webrun-devtools" target="_blank">extension page</a> and 
+        generate an API key.
+      </p>
+      <form>
+        <div class="form-input">
+          <input type="text" id="url" value="https://www.google.com" />
+          <button id="btn-run">Make Screenshots</button>
+          <button id="btn-clean" style="display: none;">Cleanup</button>
+         </div>
+        <p><small>
+          Click on this button to enter the API key and make a screenshot of the site.
+          The resulting screenshots will appear below.
+        </small></p>
+      </form>
+      <div id="screenshots"></div>
+    </main>
+    <script type="module">
+      import initDevTools from "../dist/webrun-devtools.js";
+
+      const btn = document.querySelector("#btn-run");
+      const input = document.querySelector("#url");
+      const container = document.querySelector("#screenshots");
+      const btnClean = document.querySelector("#btn-clean");
+      btnClean.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        container.innerHTML = '';
+        btnClean.style.display = 'none';
+      });
+
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const apiKey = await prompt("Enter the WebRun DevTools apiKey:", "SW_API_KEY_CHANGE_ME");
+        if (!apiKey) {
+          container.innerHTML = "No apiKey provided. Reload the page to try again.";
+          return;
+        }
+        const url = (input.value || '');
+        createScreenshot({ apiKey, url, container })
+          .then(() => btnClean.style.display = 'inline-block')
+          .catch((error) => container.innerHTML = `<strong>Error:</strong> ${error.message}`);
+      });
+
+      async function createScreenshot({
+        apiKey,
+        url,
+        container
+      }) {
+        const api = await initDevTools({ apiKey });
+        try {
+          // Open site in a new window
+          const win = await api.windows.create({
+            url,
+            focused : true,
+            width : 800,
+            height : 600
+          });
+
+          // Await a little bit while site is loading...
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          // Capture a PNG screenshot of the active tab
+          const imgUrl = await api.tabs.captureVisibleTab(win.id, {
+            format: "png"
+          });
+
+          // Create an image
+          const div = document.createElement('div');
+          container.appendChild(div);
+          div.innerHTML = `<a href="${url}" target="_blank">
+            <img src="${imgUrl}" style="max-width: 400px;" />
+          </a>`
+
+          // Remove the window
+          await api.windows.remove(win.id);
+
+        } finally {
+          // Cleanup resources and disconnect from the extension
+          await api.close();
+        }
+      }
+    </script>
+  </body>
+</html>
