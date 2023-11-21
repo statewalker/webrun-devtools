@@ -9,6 +9,8 @@
     "email": "mikhail.kotelnikov@gmail.com"
   },
   "license": "MIT",
+  "module": "dist/webrun-devtools.js",
+  "main": "dist/webrun-devtools.js",
   "scripts": {
     "prepublish": "yarn zip",
     "dev": "tsc && nodemon",
