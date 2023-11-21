@@ -95,7 +95,32 @@ export default async function connectPageToExtension({
     listeners = {};
   })
 
-  let connected = false;
+  let connected;
+  async function _initCall() {
+    if (!connected) {
+      // List of listeners to re-initialize in the background script
+      const listenersList = Object.entries(listeners).map(([listenerId, { listenerMethodName }]) => {
+        return [listenerId, listenerMethodName];
+      });
+      connected = callPort(port, {
+        method : METHOD_INIT,
+        args : [{
+          apiKey,
+          listeners : listenersList
+        }]
+      }, callTimeout);
+    }
+    return connected;
+  }
+
+  async function _call(method, ...args) {
+    await _initCall();
+    return await callPort(port, {
+      method,
+      args
+    }, callTimeout)
+  }
+
   const cleanupPort = listenPort(port, async ({ method, args } = {}) => {
     if (method === METHOD_NOTIFY_LISTENER) {
       const [listenerId, ...params] = args;
@@ -106,37 +131,13 @@ export default async function connectPageToExtension({
     } else if (method === METHOD_RESET_CONNECTION) {
       // This method is called by the injected script when the connection
       // with the background is lost.
-      connected = false;
+      connected = null;
+      await _initCall();
     } else {
       throw new Error(`Unknown method "${method}"}`);
     }
   });
   register(cleanupPort);
-
-  async function _initCall() {
-    // List of listeners to re-initialize in the background script
-    const listenersList = Object.entries(listeners).map(([listenerId, { listenerMethodName }]) => {
-      return [listenerId, listenerMethodName];
-    });
-    const result = await callPort(port, {
-      method : METHOD_INIT,
-      args : [{
-        apiKey,
-        listeners : listenersList
-      }]
-    }, callTimeout);
-    connected = true;
-    return result;
-  }
-  async function _call(method, ...args) {
-    if (!connected) {
-      await _initCall();
-    }
-    return await callPort(port, {
-      method,
-      args
-    }, callTimeout)
-  }
 
   const { methods } = await _initCall();
   for (let name of methods) {

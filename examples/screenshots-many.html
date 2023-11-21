@@ -85,7 +85,7 @@
         btn.addEventListener("click", async (ev) => {
           ev.preventDefault();
           if (!apiKey) {
-            apiKey = await prompt("Enter the WebRun DevTools apiKey:", "SW_DEBUGGER_KEY_CHANGE_ME");
+            apiKey = await prompt("Enter the WebRun DevTools apiKey:", "SW_API_KEY_CHANGE_ME");
             if (!apiKey) {
               document.querySelector("#screenshots").innerHTML = "No apiKey provided. Reload the page to try again.";
               return;
