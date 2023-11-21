@@ -1,7 +1,7 @@
 # WebRun DevTools
 **Pilot Browser from the Browser**
 
-WebRun DevTools is a Chrome browser extension that empowers developers to seamlessly write browser automation and testing scripts directly within HTML pages or notebooks, like ObservableHQ. 
+WebRun DevTools is a Chrome browser extension that empowers developers to seamlessly write browser automation and testing scripts directly within HTML pages or notebooks, like [ObservableHQ](). 
 
 The API library interacts with the extension and provides access to the same features as standalone tools like Playwright or Selenium without the overhead of heavyweight external installations in NodeJS environment.
 
@@ -137,8 +137,9 @@ async function createScreenshot({
 > yarn 
 > yarn build
 ```
-
-The resulting extension can be found in the `/dist-extension` folder.
+Results:
+* `/dist/extension` - ready to use Chrome extension (see the "[Step 1: Install Extension](#step-1-install-extension)" section)
+* `/dist/webrun-devtools.js` - client-side script to import in your HTML pages
 
 ## Exposed APIs
 
