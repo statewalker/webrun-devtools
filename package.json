@@ -5,10 +5,16 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "prepublish": "yarn zip",
     "dev": "tsc && nodemon",
     "zip": "yarn build && cd ./dist/extension && zip -r ../extension.zip *",
     "build": "tsc && vite build --config ./vite.config.views.js && vite build --config ./vite.config.content.js && vite build --config ./vite.config.background.js && vite build --config ./vite.config.api.js"
   },
+  "files": [
+    "dist/**",
+    "src/**",
+    "README.md"
+  ],
   "devDependencies": {
     "@statewalker/utils": "^0.4.2",
     "@statewalker/getset": "^0.2.4",
@@ -16,5 +22,9 @@
     "nodemon": "^3.0.1",
     "typescript": "^5.2.2",
     "vite": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:statewalker/webrun-devtools.git"
   }
 }
