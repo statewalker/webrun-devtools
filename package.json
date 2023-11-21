@@ -1,7 +1,7 @@
 {
   "name": "@statewalker/webrun-devtools",
   "description": "DevTools Extension for the StateWalker WebRun framework",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "homepage": "https://github.com/statewalker/webrun-devtools",
   "author": {
@@ -23,8 +23,8 @@
     "README.md"
   ],
   "devDependencies": {
-    "@statewalker/utils": "^0.4.2",
     "@statewalker/getset": "^0.2.4",
+    "@statewalker/utils": "^0.4.2",
     "idb-keyval": "^6.2.1",
     "nodemon": "^3.0.1",
     "typescript": "^5.2.2",
