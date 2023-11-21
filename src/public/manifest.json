@@ -7,6 +7,9 @@
     "default_icon": "./bug.png",
     "default_popup": "./popup/index.html"
   },
+  "icons": {
+    "48":  "./bug.png"
+  },
   "permissions": [
     "debugger", 
     "tabs",
@@ -21,6 +24,7 @@
     "service_worker": "./background/index.js",
     "type": "module"
   },
+  
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
