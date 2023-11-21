@@ -1,9 +1,14 @@
 {
   "name": "@statewalker/webrun-devtools",
   "description": "DevTools Extension for the StateWalker WebRun framework",
-  "private": true,
   "version": "0.0.1",
   "type": "module",
+  "homepage": "https://github.com/statewalker/webrun-devtools",
+  "author": {
+    "name": "Mikhail Kotelnikov",
+    "email": "mikhail.kotelnikov@gmail.com"
+  },
+  "license": "MIT",
   "scripts": {
     "prepublish": "yarn zip",
     "dev": "tsc && nodemon",
