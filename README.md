@@ -72,7 +72,11 @@ const imgUrl = await api.tabs.captureVisibleTab(win.id, {
 });
 ```
 
-[A full example](./ex): create a screenshot of an external site:
+### Full Example: Create Screenshots
+
+The following example allows to create a screenshot of an external site.
+* Code ine the repository: [./examples/screenshot.html](./examples/screenshot.html)
+* [On-line](https://unpkg.com/browse/@statewalker/webrun-devtools/examples/screenshot.html) - note that this example will work only if you have the WebRun DevTools extension already installed and activated in your browser
 
 ```html
 <script type=`module`>
