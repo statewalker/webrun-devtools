@@ -7,7 +7,7 @@ export default defineConfig({
   base : "./",
   publicDir: false,
   build: {
-    outDir: resolve(__dirname, './dist/extension/background'),
+    outDir: resolve(__dirname, './dist/webrun-devtools-extension/background'),
     lib : {
       entry: resolve(__dirname, './src/background/index.js'),
       name: "background",

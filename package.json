@@ -14,7 +14,7 @@
   "scripts": {
     "prepublish": "yarn zip",
     "dev": "tsc && nodemon",
-    "zip": "yarn build && cd ./dist/extension && zip -r ../webrun-devtools-extension.zip *",
+    "zip": "yarn build && cd ./dist/webrun-devtools-extension && zip -r ../webrun-devtools-extension.zip *",
     "build": "tsc && vite build --config ./vite.config.views.js && vite build --config ./vite.config.content.js && vite build --config ./vite.config.background.js && vite build --config ./vite.config.api.js"
   },
   "files": [

@@ -7,7 +7,7 @@ export default defineConfig({
   base : "./",
   publicDir: false,
   build: {
-    outDir: resolve(__dirname, './dist/extension/content'),
+    outDir: resolve(__dirname, './dist/webrun-devtools-extension/content'),
     lib : {
       entry: resolve(__dirname, './src/content/index.js'),
       name: "content",
