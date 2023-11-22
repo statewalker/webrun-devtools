@@ -10,7 +10,8 @@ WebRun DevTools prioritizes security. The API access is safeguarded by a key gen
 ## TLDR
 
 1. Install Zipped Extension: [webrun-devtools-extension.zip](https://unpkg.com/@statewalker/webrun-devtools/dist/webrun-devtools-extension.zip)
-2. Generate Secure Api Key: ![](./docs/images/generate-api-key.png)
+2. Generate Secure Api Key:
+  ![](./docs/images/generate-api-key.png)
 3. Write automation code:
 ```js
 import initDevTools from `https://unpkg.com/@statewalker/webrun-devtools`;
