@@ -30,8 +30,9 @@
       <div id="screenshots"></div>
     </main>
     <script type="module">
-      import connectToExtension, { newRegistry } from "../dist/webrun-devtools.js";
-     
+      import initDevTools, { newRegistry } from "https://unpkg.com/@statewalker/webrun-devtools";
+      // import initDevTools, { newRegistry } from "../dist/webrun-devtools.js";
+
       Promise.resolve().then(main).catch(console.error);
 
       async function main() {
@@ -45,7 +46,7 @@
           'https://webdriver.io/',
         ];
 
-        const api = await connectToExtension({ apiKey });
+        const api = await initDevTools({ apiKey });
         const windowsList = await api.windows.getAll();
         async function printWindowInfo(win) {
           console.log('Window', win);

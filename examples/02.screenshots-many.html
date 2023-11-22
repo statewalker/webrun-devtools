@@ -69,7 +69,8 @@
       <div id="screenshots"></div>
     </main>
     <script type="module">
-      import connectToExtension, { newRegistry } from "../dist/webrun-devtools.js";
+      import initDevTools, { newRegistry } from "https://unpkg.com/@statewalker/webrun-devtools";
+      // import initDevTools, { newRegistry } from "../dist/webrun-devtools.js";
      
       Promise.resolve().then(main).catch(console.error);
 
@@ -116,7 +117,7 @@
         focusWindow
       }) {
         const [register, cleanup] = newRegistry();
-        const api = await connectToExtension({ apiKey });
+        const api = await initDevTools({ apiKey });
         try {
           const onCreated = (w) => {
             console.log('A window created', w);
