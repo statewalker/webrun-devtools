@@ -107,12 +107,8 @@ async function createScreenshot({
   const api = await initDevTools({ apiKey });
   try {
     // Open site in a new window
-    const win = await api.windows.create({
-      url,
-      focused : true,
-      width : 800,
-      height : 600
-    });
+    const winOptions = { url, focused:true, width:800, height:600 }
+    const win = await api.windows.create(winOptions);
 
     // Await a little bit while site is loading...
     await new Promise(resolve => setTimeout(resolve, 300));

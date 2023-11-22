@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <img id="img" />
+    <script type="module">
+      import initDevTools from "https://unpkg.com/@statewalker/webrun-devtools";
+      (async () => {
+        const apiKey = prompt("Enter the API Key:");
+        const url = prompt("Enter the URL to capture:", "https://www.google.com");
+        const api = await initDevTools({ apiKey });
+        try {
+          const winOptions = { url, focused:true, width:800, height:600 }
+          const win = await api.windows.create(winOptions);
+          await new Promise(resolve => setTimeout(resolve, 500));
+          const imgUrl = await api.tabs.captureVisibleTab(win.id, { format: "png" });
+          document.querySelector("#img").src = imgUrl;
+          await api.windows.remove(win.id);
+        } finally {
+          await api.close();
+        }
+      })().catch(console.error);
+    </script>
+  </body>
+</html>
