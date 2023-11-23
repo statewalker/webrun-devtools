@@ -11,9 +11,10 @@
         try {
           const winOptions = { url, focused:true, width:1200, height:800 }
           const win = await api.windows.create(winOptions);
-          await new Promise(resolve => setTimeout(resolve, 5000));
+          await new Promise(resolve => setTimeout(resolve, 1000));
           const imgUrl = await api.tabs.captureVisibleTab(win.id, { format: "png" });
           document.querySelector("#img").src = imgUrl;
+
           await api.windows.remove(win.id);
         } finally {
           await api.close();
