@@ -26,6 +26,12 @@ await api.windows.remove(win.id);
 await api.close();
 ```
 
+
+
+https://github.com/statewalker/webrun-devtools/assets/1032407/db146eb6-0078-4167-8ca6-e09f48d7f333
+
+
+
 ## Table Of Content
 
 * [Examples](#examples)
