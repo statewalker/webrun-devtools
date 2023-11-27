@@ -1,6 +1,6 @@
 import { newRegistry } from '@statewalker/utils';
 import { newConnectionHandler } from './connectExtensionToPage.js';
-import { newExtensionApi } from './newBackgroundApi.js';
+import { newExtensionApi } from './api/index.js';
 import { callPort, listenPort } from '../libs/portCalls.js';
 import { 
   METHOD_DONE, 

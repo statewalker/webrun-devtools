@@ -9,7 +9,7 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, './dist/'),
     lib : {
-      entry: resolve(__dirname, './src/api/index.js'),
+      entry: resolve(__dirname, './src/api-client/index.js'),
       name: "api",
       formats: ["es"],
       fileName: "webrun-devtools",
