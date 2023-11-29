@@ -2,32 +2,34 @@
   "manifest_version": 3,
   "name": "WebRun DevTools",
   "description": "WebRun DevTools is a testing and automation extension allowing to write scripts and pilot the browser directly from HTML pages",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "action": {
     "default_icon": "./bug.png",
     "default_popup": "./popup/index.html"
   },
   "icons": {
-    "48":  "./bug.png"
+    "48": "./bug.png"
   },
   "permissions": [
-    "debugger", 
+    "debugger",
     "activeTab",
     "scripting"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
-
   "background": {
     "service_worker": "./background/index.js",
     "type": "module"
   },
-  
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["./content/index.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "./content/index.js"
+      ],
       "run_at": "document_start",
       "match_about_blank": true,
       "all_frames": true
