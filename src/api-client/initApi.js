@@ -13,7 +13,7 @@ import { newId } from "./newId.js";
 
 export async function initApi(
   port,
-  { callTimeout = 1000 * 60 * 5, closeTimeout = 1000 * 5 }
+  { apiKey, callTimeout = 1000 * 60 * 5, closeTimeout = 1000 * 5 }
 ) {
   const [register, cleanup] = newRegistry();
 

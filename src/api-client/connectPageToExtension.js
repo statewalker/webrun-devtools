@@ -8,5 +8,5 @@ export async function connectPageToExtension({
   closeTimeout = 1000 * 5,
 }) {
   const port = await openPortToExtension({ apiKey, timeout });
-  return await initApi(port, { callTimeout, closeTimeout });
+  return await initApi(port, { apiKey, callTimeout, closeTimeout });
 }
