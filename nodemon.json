@@ -9,5 +9,5 @@
   "ignore": [
     "src/**/*.spec.ts"
   ],
-  "exec": "vite build --config ./vite.config.views.js && vite build --config ./vite.config.content.js && vite build --config ./vite.config.background.js && vite build --config ./vite.config.api.js"
+  "exec": "vite build --config ./vite.config.views.js && vite build --config ./vite.config.content.js && vite build --config ./vite.config.background.js && vite build --config ./vite.config.api-client.js && vite build --config ./vite.config.api-client-ws.js"
 }

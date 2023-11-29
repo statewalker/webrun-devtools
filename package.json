@@ -1,7 +1,7 @@
 {
   "name": "@statewalker/webrun-devtools",
   "description": "DevTools Extension for the StateWalker WebRun framework",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "type": "module",
   "homepage": "https://github.com/statewalker/webrun-devtools",
   "author": {
@@ -15,7 +15,7 @@
     "prepublish": "yarn zip",
     "dev": "tsc && nodemon",
     "zip": "yarn build && cd ./dist/webrun-devtools-extension && zip -r ../webrun-devtools-extension.zip *",
-    "build": "tsc && vite build --config ./vite.config.views.js && vite build --config ./vite.config.content.js && vite build --config ./vite.config.background.js && vite build --config ./vite.config.api.js"
+    "build": "tsc && vite build --config ./vite.config.views.js && vite build --config ./vite.config.content.js && vite build --config ./vite.config.background.js && vite build --config ./vite.config.api-client.js && vite build --config ./vite.config.api-client-ws.js"
   },
   "files": [
     "dist/*.js",
