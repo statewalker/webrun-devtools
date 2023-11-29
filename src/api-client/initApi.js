@@ -1,26 +1,27 @@
-import { newRegistry } from '@statewalker/utils';
-import { set } from '@statewalker/getset';
-import { callPort, listenPort } from '../libs/portCalls.js';
+import { newRegistry } from "@statewalker/utils";
+import { set } from "@statewalker/getset";
+import { callPort, listenPort } from "../libs/portCalls.js";
 import {
   METHOD_DONE,
   METHOD_INIT,
   METHOD_ADD_LISTENER,
   METHOD_REMOVE_LISTENER,
   METHOD_NOTIFY_LISTENER,
-  METHOD_RESET_CONNECTION
-} from '../libs/constants.js';
-import { newId } from './newId.js';
+  METHOD_RESET_CONNECTION,
+} from "../libs/constants.js";
+import { newId } from "./newId.js";
 
-export async function initApi(port, {
-  callTimeout = 1000 * 60 * 5, closeTimeout = 1000 * 5,
-}) {
+export async function initApi(
+  port,
+  { callTimeout = 1000 * 60 * 5, closeTimeout = 1000 * 5 }
+) {
   const [register, cleanup] = newRegistry();
 
   const api = {};
   let listeners = {};
   register(() => {
     for (let { listener, removeListener } of Object.values(listeners)) {
-      if (typeof removeListener === 'function') {
+      if (typeof removeListener === "function") {
         removeListener(listener);
       }
     }
@@ -31,26 +32,38 @@ export async function initApi(port, {
   async function _initCall() {
     if (!connected) {
       // List of listeners to re-initialize in the background script
-      const listenersList = Object.entries(listeners).map(([listenerId, { listenerMethodName }]) => {
-        return [listenerId, listenerMethodName];
-      });
-      connected = callPort(port, {
-        method: METHOD_INIT,
-        args: [{
-          apiKey,
-          listeners: listenersList
-        }]
-      }, callTimeout);
+      const listenersList = Object.entries(listeners).map(
+        ([listenerId, { listenerMethodName }]) => {
+          return [listenerId, listenerMethodName];
+        }
+      );
+      connected = callPort(
+        port,
+        {
+          method: METHOD_INIT,
+          args: [
+            {
+              apiKey,
+              listeners: listenersList,
+            },
+          ],
+        },
+        callTimeout
+      );
     }
     return connected;
   }
 
   async function _call(method, ...args) {
     await _initCall();
-    return await callPort(port, {
-      method,
-      args
-    }, callTimeout);
+    return await callPort(
+      port,
+      {
+        method,
+        args,
+      },
+      callTimeout
+    );
   }
 
   const cleanupPort = listenPort(port, async ({ method, args } = {}) => {
@@ -73,7 +86,7 @@ export async function initApi(port, {
 
   const { methods } = await _initCall();
   for (let name of methods) {
-    const path = name.split('.');
+    const path = name.split(".");
     let method;
     if (name.match(/\.on[A-Z]/)) {
       async function removeListener(listener) {
@@ -83,11 +96,11 @@ export async function initApi(port, {
         return await _call(METHOD_REMOVE_LISTENER, listenerId, name);
       }
       async function addListener(listener, ...args) {
-        const listenerId = listener.__id = newId('listener-');
+        const listenerId = (listener.__id = newId("listener-"));
         listeners[listenerId] = {
           listener,
           removeListener,
-          listenerMethodName: name
+          listenerMethodName: name,
         };
         return await _call(METHOD_ADD_LISTENER, listenerId, name, ...args);
       }

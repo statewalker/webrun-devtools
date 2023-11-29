@@ -13,7 +13,8 @@ export function loadConnectionInfo({
 }) {
   let timerId, close;
   let promise = new Promise((y, n) => {
-    const resolve = y; close = n;
+    const resolve = y;
+    close = n;
     timerId = setInterval(async () => {
       try {
         const info = await fetchJson(url);

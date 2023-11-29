@@ -4,12 +4,10 @@ import { getTabsApi } from "./tabs/index.js";
 import { getWindowApi } from "./windows/index.js";
 
 export function newExtensionApi() {
-  return  {
-    tabs : getTabsApi(),
-    debugger : getDebuggerApi(),
-    windows : getWindowApi(),
-    custom : getCustomApi(),
+  return {
+    tabs: getTabsApi(),
+    debugger: getDebuggerApi(),
+    windows: getWindowApi(),
+    custom: getCustomApi(),
   };
 }
-
-

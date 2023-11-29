@@ -1,11 +1,11 @@
-import { newRegistry } from '@statewalker/utils';
-import { 
+import { newRegistry } from "@statewalker/utils";
+import {
   TYPE_CONTENT_CONNECTION,
-  TYPE_CONNECTION_ERROR, 
-  TYPE_CONNECTION_REQUEST, 
-  TYPE_CONNECTION_RESPONSE, 
-  TYPE_EXTENSION_READY
-} from '../libs/constants.js';
+  TYPE_CONNECTION_ERROR,
+  TYPE_CONNECTION_REQUEST,
+  TYPE_CONNECTION_RESPONSE,
+  TYPE_EXTENSION_READY,
+} from "../libs/constants.js";
 /**
  * This wrapper function transforms chrome.runtime.onConnect ports
  * to simple MessageChannel ports. It validates that the port name
@@ -21,9 +21,7 @@ import {
  * - sender (https://developer.chrome.com/docs/extensions/reference/runtime/#type-MessageSender instance)
  * @returns {function} cleanup function removing all listeners
  */
-export function newConnectionHandler({
-  onConnect
-}) {
+export function newConnectionHandler({ onConnect }) {
   const [register, cleanup] = newRegistry();
   const connectionHandler = (port) => {
     const name = port.name;
@@ -31,7 +29,7 @@ export function newConnectionHandler({
       port.disconnect();
       return;
     }
-    const { sender } = port; 
+    const { sender } = port;
     const [reg, cln] = newRegistry();
 
     const cleanAll = cln;
@@ -46,9 +44,9 @@ export function newConnectionHandler({
       } catch (err) {
         cleanAll();
       }
-    }
+    };
     port.onMessage.addListener(onMessage);
-    reg(() => port.onMessage.removeListener(onMessage))
+    reg(() => port.onMessage.removeListener(onMessage));
 
     channel.port1.onmessage = ({ data }) => {
       try {
@@ -56,9 +54,9 @@ export function newConnectionHandler({
       } catch (err) {
         cleanAll();
       }
-    };  
+    };
     reg(onConnect(channel.port2, sender));
-    reg(() => channel.port1.onmessage = null);
+    reg(() => (channel.port1.onmessage = null));
     reg(() => channel.port1.close());
   };
   chrome.runtime.onConnect.addListener(connectionHandler);
@@ -80,16 +78,16 @@ export function newConnectionHandler({
 export async function connectExtensionToPage({
   connectionType = TYPE_CONTENT_CONNECTION,
   tabId,
-  apiKey
+  apiKey,
 }) {
   // Set listeners for messages comming from the page.
   await chrome.scripting.executeScript({
     target: {
       tabId,
-      allFrames: true
+      allFrames: true,
     },
     injectImmediately: true,
-    world: 'ISOLATED',
+    world: "ISOLATED",
     args: [
       {
         connectionType,
@@ -97,8 +95,8 @@ export async function connectExtensionToPage({
         typeConnectionRequest: TYPE_CONNECTION_REQUEST,
         typeConnectionResponse: TYPE_CONNECTION_RESPONSE,
         typeConnectionError: TYPE_CONNECTION_ERROR,
-        apiKey
-      }
+        apiKey,
+      },
     ],
     // A standalone script without any dependencies.
     // So we can not use imported / global statements here.
@@ -108,27 +106,28 @@ export async function connectExtensionToPage({
       typeConnectionRequest,
       typeConnectionResponse,
       typeConnectionError,
-      apiKey
+      apiKey,
     }) {
-    
       function newPortToBackground() {
         let port;
         const channel = new MessageChannel();
         channel.port1.onmessage = async ({ data }) => {
           if (!port) {
             port = await chrome.runtime.connect({ name: connectionType });
-            port.onDisconnect.addListener(() => { port = null; });
+            port.onDisconnect.addListener(() => {
+              port = null;
+            });
             port.onMessage.addListener((data) => {
               channel.port1.postMessage(data);
             });
           }
           port.postMessage(data);
-        }
+        };
         return channel.port2;
       }
 
-      console.log('[injectedFunction]');
-      window.addEventListener('message', async function messageListener(ev) {
+      console.log("[injectedFunction]");
+      window.addEventListener("message", async function messageListener(ev) {
         const { data } = ev;
         let responseData, responsePort;
         if (data?.type === typeConnectionRequest) {
@@ -138,18 +137,22 @@ export async function connectExtensionToPage({
             responseData = { type: typeConnectionResponse, callId };
           } else {
             const message =
-              'The page is not authorized to establish connection with this extension.';
+              "The page is not authorized to establish connection with this extension.";
             responseData = {
               type: typeConnectionError,
               callId,
-              message
+              message,
             };
             console.warn(message);
           }
-          window.postMessage(responseData, '*', responsePort ? [responsePort] : []);
+          window.postMessage(
+            responseData,
+            "*",
+            responsePort ? [responsePort] : []
+          );
         }
       });
-      window.postMessage({ type: typeExtensionReady }, '*');
-    }
+      window.postMessage({ type: typeExtensionReady }, "*");
+    },
   });
 }

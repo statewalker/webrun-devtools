@@ -1,6 +1,6 @@
 @import "open-props/open-props.min.css";
 @import "open-props/normalize.min.css";
-@import "open-props/buttons.min.css"; 
+@import "open-props/buttons.min.css";
 
 body {
   padding: var(--size-fluid-3);

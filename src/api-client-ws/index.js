@@ -7,13 +7,10 @@ export * from "./listenConnectionInfo.js";
 export * from "./loadConnectionInfo.js";
 export * from "./newDebuggerApi.js";
 
-export default async function connectToDebuggerApi({
-  wsUrl, 
-  ...options
-}) {
+export default async function connectToDebuggerApi({ wsUrl, ...options }) {
   if (!wsUrl) {
     const connections = await loadConnectionInfo(options);
-    const pageInfo = connections.find(info => info.type === "page");
+    const pageInfo = connections.find((info) => info.type === "page");
     if (!pageInfo) {
       throw new Error("Can not get WebSockets connection info");
     }
@@ -23,7 +20,7 @@ export default async function connectToDebuggerApi({
   const port = await connectToWs(wsUrl, abortController.signal);
   const dbg = await newDebuggerApi(port);
   return {
-    debugger : dbg,
-    close : () => abortController.abort()
-  }
+    debugger: dbg,
+    close: () => abortController.abort(),
+  };
 }

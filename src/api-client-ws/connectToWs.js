@@ -20,12 +20,14 @@ export async function connectToWs(url, signal) {
     clientPortClose();
     closeSocketPort();
     closeSocket();
-  }
+  };
   socketPort.close = closeAll;
   channel.port2.close = closeAll;
   if (signal) {
-    if (signal.aborted) { closeAll(); }
-    signal.addEventListener('abort', () => closeAll());
+    if (signal.aborted) {
+      closeAll();
+    }
+    signal.addEventListener("abort", () => closeAll());
   }
   return channel.port2;
 }

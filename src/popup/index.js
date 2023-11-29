@@ -12,7 +12,7 @@ async function main() {
   updateSaveButton(prevApiKey);
 
   function updateSaveButton(apiKey) {
-    const updated = (prevApiKey !== apiKey);  
+    const updated = prevApiKey !== apiKey;
     btnSave.disabled = !updated;
   }
   input.addEventListener("input", async (ev) => {
@@ -28,7 +28,7 @@ async function main() {
     const apiKey = Math.random().toString(36).slice(2);
     input.value = apiKey;
     updateSaveButton(apiKey);
-  });  
+  });
 }
 
 async function onLoad(action) {

@@ -10,51 +10,51 @@ export function getTabsApi() {
   // chrome.tabs API:
   const api = wrapChromeApi("tabs", [
     // ----------------------------
-    'captureVisibleTab',
+    "captureVisibleTab",
     // 'connect', // can not return ports
-    'create',
-    'detectLanguage',
-    'discard',
-    'duplicate',
+    "create",
+    "detectLanguage",
+    "discard",
+    "duplicate",
     // 'executeScript', // deprecated
-    'get',
+    "get",
     // 'getAllInWindow', // deprecated
-    'getCurrent',
+    "getCurrent",
     // 'getSelected', // deprecated
-    'getZoom',
-    'getZoomSettings',
-    'goBack',
-    'goForward',
-    'group',
-    'highlight',
+    "getZoom",
+    "getZoomSettings",
+    "goBack",
+    "goForward",
+    "group",
+    "highlight",
     // 'insertCSS', // deprecated
-    'move',
-    'query',
-    'reload',
-    'remove',
+    "move",
+    "query",
+    "reload",
+    "remove",
     // 'removeCSS', // deprecated
-    'sendMessage',
+    "sendMessage",
     // 'sendRequest', // deprecated
-    'setZoom',
-    'setZoomSettings',
-    'ungroup',
-    'update',
+    "setZoom",
+    "setZoomSettings",
+    "ungroup",
+    "update",
 
     // ----------------------------
     // Events
     // 'onActiveChanged', // deprecated
-    'onActivated',
-    'onAttached',
-    'onCreated',
-    'onDetached',
+    "onActivated",
+    "onAttached",
+    "onCreated",
+    "onDetached",
     // 'onHighlightChanged', // deprecated
-    'onHighlighted',
-    'onMoved',
-    'onRemoved',
-    'onReplaced',
+    "onHighlighted",
+    "onMoved",
+    "onRemoved",
+    "onReplaced",
     // 'onSelectionChanged', // deprecated
-    'onUpdated',
-    'onZoomChange'
+    "onUpdated",
+    "onZoomChange",
   ]);
 
   return Object.assign(api, {
@@ -65,5 +65,4 @@ export function getTabsApi() {
     //   return target;
     // },
   });
-
 }

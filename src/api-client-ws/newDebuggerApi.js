@@ -15,13 +15,13 @@ export async function newDebuggerApi(port) {
           {
             id: callId,
             method,
-            params
+            params,
           },
           ...options
         )
       );
     });
-  };
+  }
   const targetsToSessions = {};
   const sessionsToTargets = {};
 
@@ -46,7 +46,7 @@ export async function newDebuggerApi(port) {
     const { targetId } = target;
     const { sessionId } = await call("Target.attachToTarget", {
       targetId,
-      flatten: true
+      flatten: true,
     });
     targetsToSessions[targetId] = sessionId;
     sessionsToTargets[sessionId] = targetId;
@@ -59,7 +59,7 @@ export async function newDebuggerApi(port) {
     delete sessionsToTargets[sessionId];
     await call("Target.detachFromTarget", {
       // targetId, // depricated
-      sessionId
+      sessionId,
     });
   }
 
@@ -90,7 +90,7 @@ export async function newDebuggerApi(port) {
           port.removeEventListener("message", onMessage);
           onMessage = null;
         }
-      }
+      },
     };
   }
 
@@ -119,7 +119,7 @@ export async function newDebuggerApi(port) {
           port.removeEventListener("message", onMessage);
           onMessage = null;
         }
-      }
+      },
     };
   }
 
@@ -129,6 +129,6 @@ export async function newDebuggerApi(port) {
     detach,
     getTargets,
     onEvent: newOnEventHandlers(port, onEventListeners),
-    onDetach: newOnDetachHandlers(port, onDetachListeners)
+    onDetach: newOnDetachHandlers(port, onDetachListeners),
   };
 }
