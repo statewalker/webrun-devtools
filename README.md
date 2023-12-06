@@ -45,7 +45,9 @@ The video below shows how to install and use a local extension:
 
 ## Examples
 
-*Note: These examples will work only if you have the WebRun DevTools extension already installed and activated in your browser*
+*Note 1: These examples will work only if you have the WebRun DevTools extension already installed and activated in your browser*
+
+*Note 2: You can check working examples here: [Observable > WebRun DevTools](https://observablehq.com/@kotelnikov/webrun-devtools)*
 
 * [Example 1: Create Screenshot](./examples/01.screenshot.html) ([cdn: Example 1](https://unpkg.com/@statewalker/webrun-devtools/examples/01.screenshot.html))
 * [Example 2: Create Multiple Screenshots](./examples/02.screenshots-many.html) ([cdn: Example 2](https://unpkg.com/@statewalker/webrun-devtools/examples/02.screenshots-many.html)) 
