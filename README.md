@@ -30,10 +30,8 @@ await api.close();
 You can check how it works using these Observabe Notebooks: [Observable > WebRun DevTools](https://observablehq.com/@kotelnikov/webrun-devtools)
 
 The video below shows how to install and use a local extension:
+
 [Video: WebRun DevTools - Introduction](https://github.com/statewalker/webrun-devtools/assets/1032407/22529b0f-6198-4970-9943-749209751665)
-
-
-
 
 ## Table Of Content
 
