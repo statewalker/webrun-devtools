@@ -9,12 +9,8 @@ export * from "./newDebuggerApi.js";
 
 export default async function connectToDebuggerApi({ wsUrl, ...options }) {
   if (!wsUrl) {
-    const connections = await loadConnectionInfo(options);
-    const pageInfo = connections.find((info) => info.type === "page");
-    if (!pageInfo) {
-      throw new Error("Can not get WebSockets connection info");
-    }
-    wsUrl = pageInfo.webSocketDebuggerUrl;
+    const connectionInfo = await loadConnectionInfo(options);
+    wsUrl = connectionInfo.webSocketDebuggerUrl;
   }
   const abortController = new AbortController();
   const port = await connectToWs(wsUrl, abortController.signal);

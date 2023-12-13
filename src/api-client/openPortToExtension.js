@@ -15,7 +15,6 @@ export async function openPortToExtension({ apiKey, timeout = 1000 * 5 }) {
       document.addEventListener("DOMContentLoaded", finish);
     }
   });
-  console.log("[openPortToExtension]", { apiKey, timeout });
   let timerId, onMessage;
   const promise = new Promise((resolve, reject) => {
     timerId = setTimeout(

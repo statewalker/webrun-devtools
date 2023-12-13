@@ -126,7 +126,6 @@ export async function connectExtensionToPage({
         return channel.port2;
       }
 
-      console.log("[injectedFunction]");
       window.addEventListener("message", async function messageListener(ev) {
         const { data } = ev;
         let responseData, responsePort;

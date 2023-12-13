@@ -1,6 +1,8 @@
 import { newRegistry } from "@statewalker/utils";
 import { set } from "@statewalker/getset";
-import { callPort, listenPort } from "../libs/portCalls.js";
+import { callPort, listenPort } from "@statewalker/webrun-ports";
+import { encode, decode } from "../libs/serd.js";
+
 import {
   METHOD_DONE,
   METHOD_INIT,
@@ -10,6 +12,8 @@ import {
   METHOD_RESET_CONNECTION,
 } from "../libs/constants.js";
 import { newId } from "./newId.js";
+import { ioSend } from "@statewalker/webrun-ports";
+import { newHttpClient } from "@statewalker/webrun-http";
 
 export async function initApi(
   port,
@@ -48,7 +52,7 @@ export async function initApi(
             },
           ],
         },
-        callTimeout
+        { timeout : callTimeout }
       );
     }
     return connected;
@@ -62,7 +66,7 @@ export async function initApi(
         method,
         args,
       },
-      callTimeout
+      { timeout : callTimeout }
     );
   }
 
@@ -88,7 +92,24 @@ export async function initApi(
   for (let name of methods) {
     const path = name.split(".");
     let method;
-    if (name.match(/\.on[A-Z]/)) {
+    if (name === 'http.fetch') {
+      method = async (request, ...args) => {
+        if (!(request instanceof Request)) {
+          request = new Request(request, ...args);
+        }
+        const channelName = `channel-${Date.now()}-${String(Math.random()).substring(2)}`;
+        // "Preflight" call
+        const promise = _call(name, request.url, { 
+          channelName        });
+        // The real call handling - in a separate channel
+        const client = newHttpClient((input) => decode(ioSend(port, encode(input), {
+          channelName,
+          // log: console.warn.bind(console, "CLIENT")
+        })));
+        const response = await client(request);
+        return response;
+      };
+    } else if (name.match(/\.on[A-Z]/)) {
       async function removeListener(listener) {
         const listenerId = listener.__id;
         delete listener.__id;

@@ -1,7 +1,7 @@
 import { newRegistry } from "@statewalker/utils";
+import { callPort, listenPort } from "@statewalker/webrun-ports";
 import { newConnectionHandler } from "./connectExtensionToPage.js";
 import { newExtensionApi } from "./api/index.js";
-import { callPort, listenPort } from "../libs/portCalls.js";
 import {
   METHOD_DONE,
   METHOD_INIT,
@@ -27,12 +27,12 @@ async function validateApiKey(key) {
   return key === apiKey;
 }
 
-const api = newExtensionApi();
 newConnectionHandler({
   onConnect: (port) => {
     const [register, cleanup] = newRegistry();
-    const methods = getMethods(api);
     port.start();
+    const api = newExtensionApi({ port });
+    const methods = getMethods(api);
 
     async function initializeConnection(apiKey, listeners) {
       if (!(await validateApiKey(apiKey))) {
