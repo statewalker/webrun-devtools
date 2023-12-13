@@ -9,8 +9,6 @@ import {
 import { callPort } from "@statewalker/webrun-ports";
 import { version as extensionVersion, protocolVersion } from "../../package.json";
 
-console.log('', { protocolVersion, extensionVersion });
-
 function newPortToBackground() {
   let port;
   const channel = new MessageChannel();
