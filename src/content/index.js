@@ -1,12 +1,15 @@
 import {
   TYPE_CONTENT_CONNECTION,
-  TYPE_CONNECTION_ERROR,
+  // TYPE_CONNECTION_ERROR,
   TYPE_CONNECTION_REQUEST,
   TYPE_CONNECTION_RESPONSE,
   TYPE_EXTENSION_READY,
   METHOD_RESET_CONNECTION,
 } from "../libs/constants.js";
 import { callPort } from "@statewalker/webrun-ports";
+import { version as extensionVersion, protocolVersion } from "../../package.json";
+
+console.log('', { protocolVersion, extensionVersion });
 
 function newPortToBackground() {
   let port;
@@ -39,7 +42,12 @@ window.addEventListener("message", async function messageListener(ev) {
   if (data?.type !== TYPE_CONNECTION_REQUEST) return;
   const { callId } = data;
   const responsePort = newPortToBackground();
-  const responseData = { type: TYPE_CONNECTION_RESPONSE, callId };
+  const responseData = {
+    type: TYPE_CONNECTION_RESPONSE,
+    callId,
+    protocolVersion,
+    extensionVersion
+  };
   window.postMessage(responseData, "*", [responsePort]);
 });
 window.postMessage({ type: TYPE_EXTENSION_READY }, "*");
