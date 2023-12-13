@@ -1,7 +1,7 @@
 export function loadConnectionInfo({
   port,
-  url = `http://127.0.0.1:${port}/json`,
-  log = console.log,
+  versionUrl = `http://127.0.0.1:${port}/json/version`,
+  http: log = console.log,
   retryPeriod = 500,
   fetchJson = async (url) => {
     const res = await fetch(url, {
@@ -17,10 +17,10 @@ export function loadConnectionInfo({
     close = n;
     timerId = setInterval(async () => {
       try {
-        const info = await fetchJson(url);
+        const version = await fetchJson(versionUrl);
         clearInterval(timerId);
         timerId = 0;
-        resolve(info);
+        resolve(version);
       } catch (e) {
         // log(e);
       }

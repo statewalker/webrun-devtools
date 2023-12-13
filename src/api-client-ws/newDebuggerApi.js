@@ -1,26 +1,50 @@
-export async function newDebuggerApi(port) {
-  let idCounter = 0;
+import { checkCommandResponse } from "./commandsInfo.js";
+
+export async function newDebuggerApi(
+  port,
+  { inBrowser = false, hasResponse = checkCommandResponse(inBrowser) } = {}
+) {
+  let idCounter = 1;
   async function call(method, params = {}, ...options) {
-    return new Promise((resolve, reject) => {
-      const callId = idCounter++;
-      port.addEventListener("message", function onMessage({ data }) {
-        if (callId !== data.id) return;
-        port.removeEventListener("message", onMessage);
-        const { result, error } = data;
-        if (error) reject(error);
-        else resolve(result);
-      });
-      port.postMessage(
-        Object.assign(
-          {
-            id: callId,
-            method,
-            params,
-          },
-          ...options
-        )
-      );
+    const callId = idCounter++;
+    const promise = new Promise((resolve, reject) => {
+      try {
+        const withResponse = hasResponse(method);
+        if (withResponse) {
+          port.addEventListener("message", function onMessage({ data }) {
+            if (callId !== data.id) return;
+            port.removeEventListener("message", onMessage);
+            const { result, error } = data;
+            if (error) reject(error);
+            else resolve(result);
+          });
+        }
+        port.postMessage(
+          Object.assign(
+            {
+              id: callId,
+              method,
+              params,
+            },
+            ...options
+          )
+        );
+        if (!withResponse) {
+          resolve();
+        }
+      } catch (e) {
+        reject(e);
+      }
     });
+    console.log("[>>>]", { callId, method, params });
+    promise
+      .then((result) =>
+        console.log("[<<<]", { callId, method, params, result })
+      )
+      .catch((error) =>
+        console.log("[<<<]", { callId, method, params, error })
+      );
+    return promise;
   }
   const targetsToSessions = {};
   const sessionsToTargets = {};
@@ -28,12 +52,13 @@ export async function newDebuggerApi(port) {
   let onEventListeners = [];
   let onDetachListeners = [];
 
-  async function sendCommand(target, method, params) {
+  async function sendCommand(target, method, params = {}) {
     const { targetId } = target;
     const sessionId = targetsToSessions[targetId];
-    if (!sessionId) {
-      throw new Error(`Session is not defined for the target "${targetId}"`);
-    }
+    // console.log("[sendCommand]", { targetId, sessionId, method, params });
+    // if (!sessionId) {
+    //   throw new Error(`Session is not defined for the target "${targetId}"`);
+    // }
     return await call(method, params, { sessionId });
   }
 
@@ -74,7 +99,7 @@ export async function newDebuggerApi(port) {
               return;
             const { method, params, sessionId } = data;
             const targetId = sessionsToTargets[sessionId];
-            const target = { targetId };
+            const target = { targetId, sessionId };
             for (let listener of listeners) {
               listener(target, method, params);
             }

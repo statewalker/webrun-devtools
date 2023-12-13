@@ -6,7 +6,7 @@ import {
   TYPE_EXTENSION_READY,
   METHOD_RESET_CONNECTION,
 } from "../libs/constants.js";
-import { callPort } from "../libs/portCalls.js";
+import { callPort } from "@statewalker/webrun-ports";
 
 function newPortToBackground() {
   let port;
