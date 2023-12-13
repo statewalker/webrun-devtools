@@ -4,7 +4,7 @@ import { encode, decode } from "../../../libs/serd.js";
 
 export function getHttpApi({ port } = {}) {
   return {
-    fetch : async (url, { channelName, xxx, ...options }) => {
+    fetch : async (url, { channelName, ...options }) => {
       async function* serdServer(input) {
         const server = newHttpServer(fetch);
         yield* encode(server(decode(input)));

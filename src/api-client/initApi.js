@@ -100,7 +100,8 @@ export async function initApi(
         const channelName = `channel-${Date.now()}-${String(Math.random()).substring(2)}`;
         // "Preflight" call
         const promise = _call(name, request.url, { 
-          channelName        });
+          channelName
+        });
         // The real call handling - in a separate channel
         const client = newHttpClient((input) => decode(ioSend(port, encode(input), {
           channelName,
