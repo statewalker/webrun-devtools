@@ -21,7 +21,7 @@ export async function initApi(
 ) {
   const [register, cleanup] = newRegistry();
 
-  const api = {};
+  let api = {};
   let listeners = {};
   register(() => {
     for (let { listener, removeListener } of Object.values(listeners)) {
@@ -135,7 +135,7 @@ export async function initApi(
     } else {
       method = async (...args) => await _call(name, ...args);
     }
-    set(api, path, method);
+    api = set(api, path, method);
   }
 
   api.close = async () => {
