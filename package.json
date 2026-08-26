@@ -4,6 +4,12 @@
   "version": "0.1.5",
   "protocolVersion": 0.1,
   "type": "module",
+  "packageManager": "pnpm@10.16.1",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
   "homepage": "https://github.com/statewalker/webrun-devtools",
   "author": {
     "name": "Mikhail Kotelnikov",
