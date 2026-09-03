@@ -2,3 +2,5 @@ node_modules
 dist*
 extension
 tmp
+# turbo task cache — generated, never committed.
+.turbo/
