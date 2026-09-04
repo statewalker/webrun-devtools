@@ -1,0 +1,8 @@
+# This repository is a single package, not a workspace — there is no `packages:` list to
+# write. The file exists for one reason: pnpm 10 reads build-script policy from here, and
+# reading it from `pnpm.onlyBuiltDependencies` in package.json only works when that manifest
+# is the workspace root. Inside an umbrella assembly it is not, so pnpm ignores the field and
+# says so on every install. Declared here, it is honoured standalone and collected by the
+# assembler for the assembly root.
+onlyBuiltDependencies:
+  - esbuild
