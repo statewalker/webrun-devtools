@@ -4,7 +4,7 @@
   "bugs": {
     "url": "https://github.com/statewalker/webrun-devtools/issues"
   },
-  "version": "0.1.5",
+  "version": "0.1.6",
   "protocolVersion": 0.1,
   "type": "module",
   "packageManager": "pnpm@10.16.1",
