@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title>Site Screenshot</title>
     <style>
@@ -28,8 +28,8 @@
       <form>
         <div class="form-input">
           <input type="text" id="url" value="https://www.google.com" />
-          <button id="btn-run">Make Screenshots</button>
-          <button id="btn-clean" style="display: none;">Cleanup</button>
+          <button type="button" id="btn-run">Make Screenshots</button>
+          <button type="button" id="btn-clean" style="display: none;">Cleanup</button>
          </div>
         <p><small>
           Click on this button to enter the API key and make a screenshot of the site.
@@ -40,6 +40,7 @@
     </main>
     <script type="module">
       import initDevTools from "https://unpkg.com/@statewalker/webrun-devtools";
+
       // import initDevTools from "../dist/webrun-devtools.js";
 
       const btn = document.querySelector("#btn-run");

@@ -1,15 +1,15 @@
 import { newRegistry } from "@statewalker/utils";
 import { callPort, listenPort } from "@statewalker/webrun-ports";
-import { newConnectionHandler } from "./connectExtensionToPage.js";
-import { newExtensionApi } from "./api/index.js";
+import { loadApiKey } from "../libs/apiKeysStore.js";
 import {
+  METHOD_ADD_LISTENER,
   METHOD_DONE,
   METHOD_INIT,
-  METHOD_ADD_LISTENER,
-  METHOD_REMOVE_LISTENER,
   METHOD_NOTIFY_LISTENER,
+  METHOD_REMOVE_LISTENER,
 } from "../libs/constants.js";
-import { loadApiKey } from "../libs/apiKeysStore.js";
+import { newExtensionApi } from "./api/index.js";
+import { newConnectionHandler } from "./connectExtensionToPage.js";
 
 function getMethods(obj, index = {}, prefix = "") {
   for (const key in obj) {
@@ -36,11 +36,10 @@ newConnectionHandler({
 
     async function initializeConnection(apiKey, listeners) {
       if (!(await validateApiKey(apiKey))) {
-        const message =
-          "The page is not authorized to establish connection with this extension.";
+        const message = "The page is not authorized to establish connection with this extension.";
         throw new Error(message);
       } else {
-        for (let [listenerId, eventMethodName] of listeners) {
+        for (const [listenerId, eventMethodName] of listeners) {
           await addListener(listenerId, eventMethodName);
         }
         initialized = true;
@@ -62,7 +61,7 @@ newConnectionHandler({
         return listenerId;
       } else {
         throw new Error(
-          `Unknown event listener. Name: "${eventMethodName}"; ListenerId: "${listenerId}".`
+          `Unknown event listener. Name: "${eventMethodName}"; ListenerId: "${listenerId}".`,
         );
       }
     }
@@ -77,7 +76,7 @@ newConnectionHandler({
     let listeners = {};
     let initialized = false;
     register(() => {
-      for (let remove of Object.values(listeners)) {
+      for (const remove of Object.values(listeners)) {
         remove();
       }
       listeners = {};
@@ -112,7 +111,7 @@ newConnectionHandler({
             throw new Error(`Unknown method "${method}"}`);
           }
         }
-      })
+      }),
     );
     return cleanup;
   },

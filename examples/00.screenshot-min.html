@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <body>
-    <img id="img" />
+    <img id="img" alt="Screenshot of the page" />
     <script type="module">
       import initDevTools from "https://unpkg.com/@statewalker/webrun-devtools@0.0.12";
+
       (async () => {
         const apiKey = prompt("Enter the API Key:");
         const url = prompt("Enter the URL to capture:", "https://www.google.com");

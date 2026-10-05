@@ -1,30 +1,28 @@
-import { newRegistry } from "@statewalker/utils";
 import { set } from "@statewalker/getset";
-import { callPort, listenPort } from "@statewalker/webrun-ports";
-import { encode, decode } from "../libs/serd.js";
-
+import { newRegistry } from "@statewalker/utils";
+import { newHttpClient } from "@statewalker/webrun-http";
+import { callPort, ioSend, listenPort } from "@statewalker/webrun-ports";
 import {
+  METHOD_ADD_LISTENER,
   METHOD_DONE,
   METHOD_INIT,
-  METHOD_ADD_LISTENER,
-  METHOD_REMOVE_LISTENER,
   METHOD_NOTIFY_LISTENER,
+  METHOD_REMOVE_LISTENER,
   METHOD_RESET_CONNECTION,
 } from "../libs/constants.js";
+import { decode, encode } from "../libs/serd.js";
 import { newId } from "./newId.js";
-import { ioSend } from "@statewalker/webrun-ports";
-import { newHttpClient } from "@statewalker/webrun-http";
 
 export async function initApi(
   port,
-  { apiKey, callTimeout = 1000 * 60 * 5, closeTimeout = 1000 * 5 }
+  { apiKey, callTimeout = 1000 * 60 * 5, closeTimeout = 1000 * 5 },
 ) {
   const [register, cleanup] = newRegistry();
 
   let api = {};
   let listeners = {};
   register(() => {
-    for (let { listener, removeListener } of Object.values(listeners)) {
+    for (const { listener, removeListener } of Object.values(listeners)) {
       if (typeof removeListener === "function") {
         removeListener(listener);
       }
@@ -39,7 +37,7 @@ export async function initApi(
       const listenersList = Object.entries(listeners).map(
         ([listenerId, { listenerMethodName }]) => {
           return [listenerId, listenerMethodName];
-        }
+        },
       );
       connected = callPort(
         port,
@@ -52,7 +50,7 @@ export async function initApi(
             },
           ],
         },
-        { timeout : callTimeout }
+        { timeout: callTimeout },
       );
     }
     return connected;
@@ -66,7 +64,7 @@ export async function initApi(
         method,
         args,
       },
-      { timeout : callTimeout }
+      { timeout: callTimeout },
     );
   }
 
@@ -89,24 +87,28 @@ export async function initApi(
   register(cleanupPort);
 
   const { methods } = await _initCall();
-  for (let name of methods) {
+  for (const name of methods) {
     const path = name.split(".");
     let method;
-    if (name === 'http.fetch') {
+    if (name === "http.fetch") {
       method = async (request, ...args) => {
         if (!(request instanceof Request)) {
           request = new Request(request, ...args);
         }
         const channelName = `channel-${Date.now()}-${String(Math.random()).substring(2)}`;
         // "Preflight" call
-        const promise = _call(name, request.url, { 
-          channelName
+        const _promise = _call(name, request.url, {
+          channelName,
         });
         // The real call handling - in a separate channel
-        const client = newHttpClient((input) => decode(ioSend(port, encode(input), {
-          channelName,
-          // log: console.warn.bind(console, "CLIENT")
-        })));
+        const client = newHttpClient((input) =>
+          decode(
+            ioSend(port, encode(input), {
+              channelName,
+              // log: console.warn.bind(console, "CLIENT")
+            }),
+          ),
+        );
         const response = await client(request);
         return response;
       };
@@ -118,7 +120,8 @@ export async function initApi(
         return await _call(METHOD_REMOVE_LISTENER, listenerId, name);
       }
       async function addListener(listener, ...args) {
-        const listenerId = (listener.__id = newId("listener-"));
+        const listenerId = newId("listener-");
+        listener.__id = listenerId;
         listeners[listenerId] = {
           listener,
           removeListener,

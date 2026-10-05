@@ -10,26 +10,16 @@
   "icons": {
     "48": "./bug.png"
   },
-  "permissions": [
-    "debugger",
-    "activeTab",
-    "scripting"
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
+  "permissions": ["debugger", "activeTab", "scripting"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "./background/index.js",
     "type": "module"
   },
   "content_scripts": [
     {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "./content/index.js"
-      ],
+      "matches": ["<all_urls>"],
+      "js": ["./content/index.js"],
       "run_at": "document_start",
       "match_about_blank": true,
       "all_frames": true

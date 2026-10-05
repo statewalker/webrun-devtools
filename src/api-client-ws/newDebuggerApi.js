@@ -2,7 +2,7 @@ import { checkCommandResponse } from "./commandsInfo.js";
 
 export async function newDebuggerApi(
   port,
-  { inBrowser = false, hasResponse = checkCommandResponse(inBrowser) } = {}
+  { inBrowser = false, hasResponse = checkCommandResponse(inBrowser) } = {},
 ) {
   let idCounter = 1;
   async function call(method, params = {}, ...options) {
@@ -26,8 +26,8 @@ export async function newDebuggerApi(
               method,
               params,
             },
-            ...options
-          )
+            ...options,
+          ),
         );
         if (!withResponse) {
           resolve();
@@ -38,19 +38,15 @@ export async function newDebuggerApi(
     });
     console.log("[>>>]", { callId, method, params });
     promise
-      .then((result) =>
-        console.log("[<<<]", { callId, method, params, result })
-      )
-      .catch((error) =>
-        console.log("[<<<]", { callId, method, params, error })
-      );
+      .then((result) => console.log("[<<<]", { callId, method, params, result }))
+      .catch((error) => console.log("[<<<]", { callId, method, params, error }));
     return promise;
   }
   const targetsToSessions = {};
   const sessionsToTargets = {};
 
-  let onEventListeners = [];
-  let onDetachListeners = [];
+  const onEventListeners = [];
+  const onDetachListeners = [];
 
   async function sendCommand(target, method, params = {}) {
     const { targetId } = target;
@@ -95,12 +91,11 @@ export async function newDebuggerApi(
         listeners.push(listener);
         if (!onMessage) {
           onMessage = ({ data }) => {
-            if (!data.method || data.method === "Target.detachedFromTarget")
-              return;
+            if (!data.method || data.method === "Target.detachedFromTarget") return;
             const { method, params, sessionId } = data;
             const targetId = sessionsToTargets[sessionId];
             const target = { targetId, sessionId };
-            for (let listener of listeners) {
+            for (const listener of listeners) {
               listener(target, method, params);
             }
           };
@@ -129,7 +124,7 @@ export async function newDebuggerApi(
             const { method, params } = data;
             if (method !== "Target.detachedFromTarget") return;
             const reason = "canceled_by_user";
-            for (let listener of listeners) {
+            for (const listener of listeners) {
               listener(params, reason);
             }
           };

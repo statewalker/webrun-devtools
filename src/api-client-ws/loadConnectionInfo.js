@@ -12,7 +12,7 @@ export function loadConnectionInfo({
   },
 }) {
   let timerId, close;
-  let promise = new Promise((y, n) => {
+  const promise = new Promise((y, n) => {
     const resolve = y;
     close = n;
     timerId = setInterval(async () => {
@@ -21,7 +21,7 @@ export function loadConnectionInfo({
         clearInterval(timerId);
         timerId = 0;
         resolve(version);
-      } catch (e) {
+      } catch (_e) {
         // log(e);
       }
     }, retryPeriod);

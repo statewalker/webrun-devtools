@@ -5,7 +5,7 @@ export async function connectToWs(url, signal) {
       (socket.onopen = function onOpen() {
         socket.onopen = null;
         resolve();
-      })
+      }),
   );
   const channel = new MessageChannel();
   const socketPort = channel.port1;
