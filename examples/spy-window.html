@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title>Titre de la page</title>
     <style>
@@ -31,13 +31,14 @@
     </main>
     <script type="module">
       import initDevTools, { newRegistry } from "https://unpkg.com/@statewalker/webrun-devtools@0.0.12";
+
       // import initDevTools, { newRegistry } from "../dist/webrun-devtools.js";
 
       Promise.resolve().then(main).catch(console.error);
 
       async function main() {
         const apiKey = await prompt("Enter the debugger apiKey:", "SW_API_KEY_CHANGE_ME");
-        const urls = [
+        const _urls = [
           'https://svelte.dev/',
           'https://astro.build',
           'https://react.dev/',
@@ -56,13 +57,13 @@
           console.log('tabs', tabs);
         }
 
-        for (let win of windowsList) {
+        for (const win of windowsList) {
           await printWindowInfo(win);
         }
 
         console.log("--------------------------------");
 
-        const [register, cleanup] = newRegistry();
+        const [register, _cleanup] = newRegistry();
         register(await api.windows.onCreated(async (win) => {
           console.log('A window created', win);
           await printWindowInfo(win);

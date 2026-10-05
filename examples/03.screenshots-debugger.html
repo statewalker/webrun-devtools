@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title>Screenshots with Debugger API</title>
     <style>
@@ -59,7 +59,7 @@
           <textarea name="urls" id="urls" rows="10" columns="50"></textarea>
         </div>
         <div class="form-input">
-          <button id="btn-run">Make Screenshots</button>
+          <button type="button" id="btn-run">Make Screenshots</button>
         </div>
       </form>
       <div id="screenshots"></div>
@@ -67,6 +67,7 @@
     
     <script type="module">
       import initDevTools from "https://unpkg.com/@statewalker/webrun-devtools";
+
       // import initDevTools from "../dist/webrun-devtools.js";
      
       Promise.resolve().then(main).catch(console.error);
@@ -120,7 +121,7 @@
         await api.debugger.attach(target, '1.3');
         try {
           await api.debugger.sendCommand(target, "Page.enable");
-          for (let url of urls) {
+          for (const url of urls) {
 
             await api.debugger.sendCommand(target, "Page.navigate", { url });
             await api.debugger.$once(target, "Page.loadEventFired");

@@ -6,3 +6,17 @@
 # assembler for the assembly root.
 onlyBuiltDependencies:
   - esbuild
+
+catalog:
+  "@changesets/cli": ^3.0.3
+  "@biomejs/biome": ^2.5.15
+  "@statewalker/getset": ^0.2.6
+  "@statewalker/utils": ^0.4.2
+  "@statewalker/webrun-http": ^0.1.0
+  "@statewalker/webrun-ports": ^0.4.0
+  "idb-keyval": ^6.3.0
+  "nodemon": ^3.1.14
+  "open-props": ^1.7.23
+  "semver": ^7.8.5
+  "typescript": ^7.0.2
+  "vite": ^8.3.2

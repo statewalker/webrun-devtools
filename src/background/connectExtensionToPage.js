@@ -1,9 +1,9 @@
 import { newRegistry } from "@statewalker/utils";
 import {
-  TYPE_CONTENT_CONNECTION,
   TYPE_CONNECTION_ERROR,
   TYPE_CONNECTION_REQUEST,
   TYPE_CONNECTION_RESPONSE,
+  TYPE_CONTENT_CONNECTION,
   TYPE_EXTENSION_READY,
 } from "../libs/constants.js";
 /**
@@ -41,7 +41,7 @@ export function newConnectionHandler({ onConnect }) {
     const onMessage = (data) => {
       try {
         channel.port1.postMessage(data);
-      } catch (err) {
+      } catch (_err) {
         cleanAll();
       }
     };
@@ -51,7 +51,7 @@ export function newConnectionHandler({ onConnect }) {
     channel.port1.onmessage = ({ data }) => {
       try {
         port.postMessage(data);
-      } catch (err) {
+      } catch (_err) {
         cleanAll();
       }
     };
@@ -144,11 +144,7 @@ export async function connectExtensionToPage({
             };
             console.warn(message);
           }
-          window.postMessage(
-            responseData,
-            "*",
-            responsePort ? [responsePort] : []
-          );
+          window.postMessage(responseData, "*", responsePort ? [responsePort] : []);
         }
       });
       window.postMessage({ type: typeExtensionReady }, "*");

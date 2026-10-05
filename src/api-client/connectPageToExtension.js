@@ -1,5 +1,5 @@
-import { openPortToExtension } from "./openPortToExtension.js";
 import { initApi } from "./initApi.js";
+import { openPortToExtension } from "./openPortToExtension.js";
 
 export async function connectPageToExtension({
   apiKey,

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title>Multiple Sites Screenshots</title>
     <style>
@@ -63,13 +63,14 @@
           <input type="checkbox" name="focus-window" id="focus-window" />
         </div>
         <div class="form-input">
-          <button id="btn-run">Make Screenshots</button>
+          <button type="button" id="btn-run">Make Screenshots</button>
         </div>
       </form>
       <div id="screenshots"></div>
     </main>
     <script type="module">
       import initDevTools, { newRegistry } from "https://unpkg.com/@statewalker/webrun-devtools";
+
       // import initDevTools, { newRegistry } from "../dist/webrun-devtools.js";
      
       Promise.resolve().then(main).catch(console.error);
@@ -144,7 +145,7 @@
             const tab = win.tabs[0];
             // console.log('A tab created', tab);
 
-            for (let url of urls) {
+            for (const url of urls) {
               await api.tabs.update(tab.id, { url, active: true });
               // MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND = 2
               // See https://developer.chrome.com/docs/extensions/reference/tabs/#property-MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND

@@ -1,13 +1,13 @@
+import { callPort } from "@statewalker/webrun-ports";
+import { version as extensionVersion, protocolVersion } from "../../package.json";
 import {
-  TYPE_CONTENT_CONNECTION,
+  METHOD_RESET_CONNECTION,
   // TYPE_CONNECTION_ERROR,
   TYPE_CONNECTION_REQUEST,
   TYPE_CONNECTION_RESPONSE,
+  TYPE_CONTENT_CONNECTION,
   TYPE_EXTENSION_READY,
-  METHOD_RESET_CONNECTION,
 } from "../libs/constants.js";
-import { callPort } from "@statewalker/webrun-ports";
-import { version as extensionVersion, protocolVersion } from "../../package.json";
 
 function newPortToBackground() {
   let port;
@@ -44,7 +44,7 @@ window.addEventListener("message", async function messageListener(ev) {
     type: TYPE_CONNECTION_RESPONSE,
     callId,
     protocolVersion,
-    extensionVersion
+    extensionVersion,
   };
   window.postMessage(responseData, "*", [responsePort]);
 });

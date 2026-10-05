@@ -1,8 +1,8 @@
 import { getCustomApi } from "./custom/index.js";
 import { getDebuggerApi } from "./debugger/index.js";
+import { getHttpApi } from "./http/index.js";
 import { getTabsApi } from "./tabs/index.js";
 import { getWindowApi } from "./windows/index.js";
-import { getHttpApi } from "./http/index.js";
 
 export function newExtensionApi(options) {
   return {
@@ -13,4 +13,3 @@ export function newExtensionApi(options) {
     http: getHttpApi(options),
   };
 }
-

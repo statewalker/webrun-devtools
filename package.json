@@ -1,11 +1,14 @@
 {
   "name": "@statewalker/webrun-devtools",
   "description": "DevTools Extension for the StateWalker WebRun framework",
+  "bugs": {
+    "url": "https://github.com/statewalker/webrun-devtools/issues"
+  },
   "version": "0.1.5",
   "protocolVersion": 0.1,
   "type": "module",
   "packageManager": "pnpm@10.16.1",
-  "homepage": "https://github.com/statewalker/webrun-devtools",
+  "homepage": "https://github.com/statewalker/webrun-devtools#readme",
   "author": {
     "name": "Mikhail Kotelnikov",
     "email": "mikhail.kotelnikov@gmail.com"
@@ -14,10 +17,15 @@
   "module": "dist/webrun-devtools.js",
   "main": "dist/webrun-devtools.js",
   "scripts": {
-    "prepublish": "yarn zip",
     "dev": "tsc && nodemon",
-    "zip": "yarn build && cd ./dist/webrun-devtools-extension && zip -r ../webrun-devtools-extension.zip *",
-    "build": "rm -fr ./dist && tsc && vite build --config ./vite.config.views.js && vite build --config ./vite.config.content.js && vite build --config ./vite.config.background.js && vite build --config ./vite.config.api-client.js && vite build --config ./vite.config.api-client-ws.js"
+    "build": "rm -rf dist && tsc && vite build --config ./vite.config.views.js && vite build --config ./vite.config.content.js && vite build --config ./vite.config.background.js && vite build --config ./vite.config.api-client.js && vite build --config ./vite.config.api-client-ws.js",
+    "zip": "pnpm run build && cd ./dist/webrun-devtools-extension && zip -r ../webrun-devtools-extension.zip .",
+    "typecheck": "tsc",
+    "lint": "biome check --write .",
+    "lint:check": "biome check .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "changeset": "changeset"
   },
   "files": [
     "dist/*.js",
@@ -28,25 +36,27 @@
     "README.md"
   ],
   "devDependencies": {
-    "@statewalker/getset": "^0.2.4",
-    "@statewalker/utils": "^0.4.2",
-    "@statewalker/webrun-http": "^0.1.0",
-    "@statewalker/webrun-ports": "^0.3.0",
-    "idb-keyval": "^6.2.1",
-    "nodemon": "^3.0.1",
-    "open-props": "^1.6.12",
-    "typescript": "^5.2.2",
-    "vite": "^5.0.0"
+    "@biomejs/biome": "catalog:",
+    "@changesets/cli": "catalog:",
+    "@statewalker/getset": "catalog:",
+    "@statewalker/utils": "catalog:",
+    "@statewalker/webrun-http": "catalog:",
+    "@statewalker/webrun-ports": "catalog:",
+    "idb-keyval": "catalog:",
+    "nodemon": "catalog:",
+    "open-props": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:statewalker/webrun-devtools.git"
+    "url": "git+https://github.com/statewalker/webrun-devtools.git"
   },
   "sideEffects": false,
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
-    "semver": "^7.5.4"
+    "semver": "catalog:"
   }
 }
