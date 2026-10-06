@@ -1,0 +1,35 @@
+# Dependabot version updates: weekly pull requests, checked by CI and merged by hand.
+version: 2
+updates:
+  # Dependencies, pnpm catalogs included. A version that still fits its range only moves the
+  # lockfile; one outside it (a major, or a minor below 1.0) rewrites the range.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Paris
+    versioning-strategy: increase-if-necessary
+    cooldown:
+      default-days: 3
+    open-pull-requests-limit: 10
+    groups:
+      # Internal packages are normally updated by the local release script right after a
+      # release; this group catches whatever it missed.
+      statewalker:
+        patterns: ["@statewalker/*"]
+      external-minor-patch:
+        patterns: ["*"]
+        exclude-patterns: ["@statewalker/*"]
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Paris
+    groups:
+      actions:
+        patterns: ["*"]
