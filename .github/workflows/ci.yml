@@ -11,3 +11,19 @@ jobs:
     with:
       # No test suite: the extension is exercised by hand through examples/.
       test-command: pnpm run --if-present test
+
+  # The lockfile-only pull request that .github/workflows/statewalker-update.yml opens: merged
+  # once every other check on it passes, after checking it changes pnpm-lock.yaml alone
+  # (statewalker/statewalker-ci's merge-lockfile.yml; statewalker-root docs/process/merging.md).
+  lockfile:
+    needs: ci
+    # !cancelled(): also after a failed check job, so the pull request gets a comment saying why.
+    if: ${{ !cancelled() && github.event_name == 'pull_request' && github.head_ref == 'deps/statewalker-lockfile' }}
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
+      statuses: read
+      actions: read
+    uses: statewalker/statewalker-ci/.github/workflows/merge-lockfile.yml@main
+    secrets: inherit
