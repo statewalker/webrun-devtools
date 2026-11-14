@@ -7,7 +7,7 @@ on:
 
 jobs:
   ci:
-    uses: statewalker/.github/.github/workflows/ci.yml@main
+    uses: statewalker/statewalker-ci/.github/workflows/ci.yml@main
     with:
       # No test suite: the extension is exercised by hand through examples/.
       test-command: pnpm run --if-present test
