@@ -1,0 +1,21 @@
+name: Update @statewalker
+
+# Moves the lockfile to the newest @statewalker/* versions within the ranges declared here, in a
+# lockfile-only pull request that ci.yml's `lockfile` job merges once green. Ranges never change,
+# so nothing is republished (statewalker/statewalker-ci, "Dependents update themselves after a
+# publish"). Run when a publisher sends `statewalker-published`, daily in case one was missed,
+# and by hand.
+on:
+  repository_dispatch:
+    types: [statewalker-published]
+  schedule:
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: statewalker-update
+
+jobs:
+  update:
+    uses: statewalker/statewalker-ci/.github/workflows/statewalker-update.yml@main
+    secrets: inherit
