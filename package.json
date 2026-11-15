@@ -16,9 +16,10 @@
   "license": "MIT",
   "module": "dist/webrun-devtools.js",
   "main": "dist/webrun-devtools.js",
+  "types": "dist/types/api-client/index.d.ts",
   "scripts": {
     "dev": "tsc && nodemon",
-    "build": "rm -rf dist && tsc && vite build --config ./vite.config.views.js && vite build --config ./vite.config.content.js && vite build --config ./vite.config.background.js && vite build --config ./vite.config.api-client.js && vite build --config ./vite.config.api-client-ws.js",
+    "build": "rm -rf dist && tsc && vite build --config ./vite.config.views.js && vite build --config ./vite.config.content.js && vite build --config ./vite.config.background.js && vite build --config ./vite.config.api-client.js && vite build --config ./vite.config.api-client-ws.js && tsc -p tsconfig.types.json",
     "zip": "pnpm run build && cd ./dist/webrun-devtools-extension && zip -r ../webrun-devtools-extension.zip .",
     "typecheck": "tsc",
     "lint": "biome check --write .",
@@ -30,6 +31,7 @@
   "files": [
     "dist/*.js",
     "dist/*.zip",
+    "dist/types/**",
     "docs/**",
     "src/**",
     "examples/**",
