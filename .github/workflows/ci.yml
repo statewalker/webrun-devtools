@@ -9,8 +9,13 @@ jobs:
   ci:
     uses: statewalker/statewalker-ci/.github/workflows/ci.yml@main
     with:
+      # An app baseline (build and typecheck required), not library: there is no test suite,
+      # the extension is exercised by hand through examples/.
+      baseline: app
+      package-checks: true
+      api-diff: true
+      secret-scan: true
       release-path: true
-      # No test suite: the extension is exercised by hand through examples/.
       test-command: pnpm run --if-present test
 
   # The lockfile-only pull request that .github/workflows/statewalker-update.yml opens: merged
