@@ -1,5 +1,11 @@
 # @statewalker/webrun-devtools
 
+## 0.1.7
+
+### Patch Changes
+
+- 1fdad92: Ship type declarations for the main entry point (`types`: `dist/types/api-client/index.d.ts`), generated from the JavaScript sources, and type the re-exported `newRegistry` locally, since `@statewalker/utils` (bundled, not a dependency) has no types.
+
 ## 0.1.6
 
 ### Patch Changes
