@@ -30,3 +30,33 @@ export function newFakeChrome({ sendCommand = async () => ({}) } = {}) {
     },
   };
 }
+
+/**
+ * Two connected ports whose messages are copied as JSON, as `chrome.runtime` ports copy
+ * them (an `Error` becomes `{}`); MessagePorts would keep errors through structured clone.
+ * Each side has `postMessage`, `addEventListener("message")` and `removeEventListener`.
+ */
+export function newJsonPortPair() {
+  const newSide = () => {
+    const target = new EventTarget();
+    return {
+      peer: undefined,
+      addEventListener: (type, listener) => target.addEventListener(type, listener),
+      removeEventListener: (type, listener) => target.removeEventListener(type, listener),
+      dispatch: (data) => {
+        const event = new Event("message");
+        Object.defineProperty(event, "data", { value: data });
+        target.dispatchEvent(event);
+      },
+      postMessage(data) {
+        const copy = JSON.parse(JSON.stringify(data));
+        setTimeout(() => this.peer.dispatch(copy), 0);
+      },
+    };
+  };
+  const a = newSide();
+  const b = newSide();
+  a.peer = b;
+  b.peer = a;
+  return [a, b];
+}
