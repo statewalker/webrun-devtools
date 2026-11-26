@@ -10,6 +10,7 @@ import {
   METHOD_REMOVE_LISTENER,
   METHOD_RESET_CONNECTION,
 } from "../libs/constants.js";
+import { withErrorData } from "../libs/errors.js";
 import { decode, encode } from "../libs/serd.js";
 import { newId } from "./newId.js";
 
@@ -68,22 +69,25 @@ export async function initApi(
     );
   }
 
-  const cleanupPort = listenPort(port, async ({ method, args } = {}) => {
-    if (method === METHOD_NOTIFY_LISTENER) {
-      const [listenerId, ...params] = args;
-      const { listener } = listeners[listenerId] || {};
-      if (listener) {
-        return await listener(...params);
+  const cleanupPort = listenPort(
+    port,
+    withErrorData(async ({ method, args } = {}) => {
+      if (method === METHOD_NOTIFY_LISTENER) {
+        const [listenerId, ...params] = args;
+        const { listener } = listeners[listenerId] || {};
+        if (listener) {
+          return await listener(...params);
+        }
+      } else if (method === METHOD_RESET_CONNECTION) {
+        // This method is called by the injected script when the connection
+        // with the background is lost.
+        connected = null;
+        await _initCall();
+      } else {
+        throw new Error(`Unknown method "${method}"`);
       }
-    } else if (method === METHOD_RESET_CONNECTION) {
-      // This method is called by the injected script when the connection
-      // with the background is lost.
-      connected = null;
-      await _initCall();
-    } else {
-      throw new Error(`Unknown method "${method}"}`);
-    }
-  });
+    }),
+  );
   register(cleanupPort);
 
   const { methods } = await _initCall();

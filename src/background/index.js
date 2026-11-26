@@ -8,6 +8,7 @@ import {
   METHOD_NOTIFY_LISTENER,
   METHOD_REMOVE_LISTENER,
 } from "../libs/constants.js";
+import { withErrorData } from "../libs/errors.js";
 import { newExtensionApi } from "./api/index.js";
 import { newConnectionHandler } from "./connectExtensionToPage.js";
 
@@ -83,35 +84,38 @@ newConnectionHandler({
     });
 
     register(
-      listenPort(port, async (data) => {
-        if (!data) {
-          throw new Error("No data");
-        }
-        const { method, args } = data;
-        if (method === METHOD_INIT) {
-          const { apiKey, listeners = [] } = args[0] || {};
-          return await initializeConnection(apiKey, listeners);
-        }
-        if (!initialized) {
-          throw new Error(`The API was not initialized. Method: "${method}"`);
-        }
-        if (method === METHOD_DONE) {
-          cleanup();
-        } else if (method === METHOD_ADD_LISTENER) {
-          const [listenerId, eventMethodName] = args;
-          return await addListener(listenerId, eventMethodName);
-        } else if (method === METHOD_REMOVE_LISTENER) {
-          const [listenerId] = args;
-          return await removeListener(listenerId);
-        } else {
-          const fn = methods[method];
-          if (typeof fn === "function") {
-            return await fn(...args);
-          } else {
-            throw new Error(`Unknown method "${method}"}`);
+      listenPort(
+        port,
+        withErrorData(async (data) => {
+          if (!data) {
+            throw new Error("No data");
           }
-        }
-      }),
+          const { method, args } = data;
+          if (method === METHOD_INIT) {
+            const { apiKey, listeners = [] } = args[0] || {};
+            return await initializeConnection(apiKey, listeners);
+          }
+          if (!initialized) {
+            throw new Error(`The API was not initialized. Method: "${method}"`);
+          }
+          if (method === METHOD_DONE) {
+            cleanup();
+          } else if (method === METHOD_ADD_LISTENER) {
+            const [listenerId, eventMethodName] = args;
+            return await addListener(listenerId, eventMethodName);
+          } else if (method === METHOD_REMOVE_LISTENER) {
+            const [listenerId] = args;
+            return await removeListener(listenerId);
+          } else {
+            const fn = methods[method];
+            if (typeof fn === "function") {
+              return await fn(...args);
+            } else {
+              throw new Error(`Unknown method "${method}"`);
+            }
+          }
+        }),
+      ),
     );
     return cleanup;
   },
