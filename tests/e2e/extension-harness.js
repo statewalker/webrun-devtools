@@ -15,8 +15,22 @@ export const clientBundle = join(root, "dist/webrun-devtools.js");
 export const API_KEY = "e2e-test-key";
 
 /**
+ * Reads an example page with its client import pointed at the locally built client
+ * (the examples import it from unpkg).
+ * @param {string} name e.g. "01.screenshot.html"
+ */
+export async function readExample(name) {
+  const html = await readFile(join(root, "examples", name), "utf8");
+  return html.replace(
+    /https:\/\/unpkg\.com\/@statewalker\/webrun-devtools(@[^"']*)?/g,
+    "/webrun-devtools.js",
+  );
+}
+
+/**
  * Serves `/webrun-devtools.js` (the built client) and the given pages by path.
- * @param {Record<string, string>} pages HTML by path, e.g. { "/": "<html>..." }
+ * @param {Record<string, string | ((req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) => void)>} pages
+ * HTML by path, e.g. { "/": "<html>..." }, or a handler answering the request itself
  */
 export async function serve(pages) {
   const client = await readFile(clientBundle);
@@ -25,6 +39,8 @@ export async function serve(pages) {
     if (path === "/webrun-devtools.js") {
       res.writeHead(200, { "content-type": "text/javascript" });
       res.end(client);
+    } else if (typeof pages[path] === "function") {
+      pages[path](req, res);
     } else if (path in pages) {
       res.writeHead(200, { "content-type": "text/html" });
       res.end(pages[path]);

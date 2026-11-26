@@ -11,8 +11,16 @@
         const api = await initDevTools({ apiKey });
         try {
           const winOptions = { url, focused:true, width:1200, height:800 }
-          const win = await api.windows.create(winOptions);
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Listen before opening the window, so a fast load is not missed
+          let win, onLoaded;
+          const loaded = new Promise((resolve) => (onLoaded = resolve));
+          const onUpdated = (tabId, { status }) => {
+            if (status === "complete" && tabId === win?.tabs[0].id) onLoaded();
+          };
+          await api.tabs.onUpdated.addListener(onUpdated);
+          win = await api.windows.create(winOptions);
+          if ((await api.tabs.get(win.tabs[0].id)).status !== "complete") await loaded;
+          await api.tabs.onUpdated.removeListener(onUpdated);
           const imgUrl = await api.tabs.captureVisibleTab(win.id, { format: "png" });
           document.querySelector("#img").src = imgUrl;
 

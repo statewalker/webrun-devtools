@@ -229,7 +229,7 @@ This extension creates a bridge with the client code and the exposes the followi
   - `onFocusChanged`,
   - `onRemoved`,
 * [chrome.tabs](https://developer.chrome.com/docs/extensions/reference/tabs/):
-  - `captureVisibleTab`
+  - `captureVisibleTab` - the tab must have finished loading: wait for `tabs.onUpdated` with `status: "complete"` for it, listening before you create or navigate the tab (see `runAndWaitForTab` in [Example 1](./examples/01.screenshot.html)), rather than sleeping a fixed time. It refuses pages it cannot access, `data:` URLs included even with `<all_urls>`, so capture http(s) pages
   - `connect` - not exposed; we can not return ports
   - `create`
   - `detectLanguage`

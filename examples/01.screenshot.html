@@ -66,6 +66,35 @@
           .catch((error) => container.innerHTML = `<strong>Error:</strong> ${error.message}`);
       });
 
+      // Runs `action`, which opens or navigates a tab and returns the tab's id, and waits
+      // until that tab has finished loading. It listens for tabs.onUpdated before acting,
+      // so a page that loads at once is not missed. captureVisibleTab fails on a tab that
+      // is still loading ("Cannot access contents of the page").
+      async function runAndWaitForTab(api, action, { timeout = 30000 } = {}) {
+        const completed = new Set();
+        let tabId, onLoaded, timerId;
+        const onUpdated = (id, changeInfo) => {
+          if (changeInfo.status !== "complete") return;
+          completed.add(id);
+          if (id === tabId) onLoaded();
+        };
+        await api.tabs.onUpdated.addListener(onUpdated);
+        try {
+          const loaded = new Promise((resolve, reject) => {
+            onLoaded = resolve;
+            timerId = setTimeout(
+              () => reject(new Error(`The tab did not finish loading in ${timeout} ms.`)),
+              timeout,
+            );
+          });
+          tabId = await action();
+          if (!completed.has(tabId)) await loaded;
+        } finally {
+          clearTimeout(timerId);
+          await api.tabs.onUpdated.removeListener(onUpdated);
+        }
+      }
+
       async function createScreenshot({
         apiKey,
         url,
@@ -73,16 +102,17 @@
       }) {
         const api = await initDevTools({ apiKey });
         try {
-          // Open site in a new window
-          const win = await api.windows.create({
-            url,
-            focused : true,
-            width : 800,
-            height : 600
+          // Open site in a new window and wait until it has loaded
+          let win;
+          await runAndWaitForTab(api, async () => {
+            win = await api.windows.create({
+              url,
+              focused : true,
+              width : 800,
+              height : 600
+            });
+            return win.tabs[0].id;
           });
-
-          // Await a little bit while site is loading...
-          await new Promise(resolve => setTimeout(resolve, 500));
 
           // Capture a PNG screenshot of the active tab
           const imgUrl = await api.tabs.captureVisibleTab(win.id, {
