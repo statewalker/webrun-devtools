@@ -1,5 +1,5 @@
 import { wrapChromeApi } from "../wrapChromeApi.js";
-import { $once } from "./$once.js";
+import { $once, sendCommandAndWait } from "./$once.js";
 
 /**
  * Returns the debugger API with additional methods.
@@ -16,5 +16,6 @@ export function getDebuggerApi() {
   ]);
   return Object.assign(api, {
     $once,
+    sendCommandAndWait,
   });
 }

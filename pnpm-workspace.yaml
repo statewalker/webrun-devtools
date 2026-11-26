@@ -17,6 +17,10 @@ catalog:
   "idb-keyval": ^6.3.0
   "nodemon": ^3.1.14
   "open-props": ^1.7.23
+  # Pinned to the minor whose browsers are installed where the end-to-end tests run
+  # (a Playwright release only drives the browser revision it was built for).
+  "playwright": 1.63.0
   "semver": ^7.8.5
   "typescript": ^7.0.2
   "vite": ^8.3.2
+  "vitest": ^5.1.2

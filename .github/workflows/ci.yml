@@ -9,8 +9,9 @@ jobs:
   ci:
     uses: statewalker/statewalker-ci/.github/workflows/ci.yml@main
     with:
-      # An app baseline (build and typecheck required), not library: there is no test suite,
-      # the extension is exercised by hand through examples/.
+      # An app baseline (build and typecheck required), not library. `test` runs the unit tests
+      # (Vitest, a fake of chrome.*); the end-to-end tests that load the extension into
+      # Chromium (`pnpm test:e2e`) need Playwright's browser and run locally.
       baseline: app
       package-checks: true
       api-diff: true
