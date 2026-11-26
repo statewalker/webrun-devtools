@@ -170,13 +170,17 @@
 
       // Runs `action`, which opens or navigates a tab and returns the tab's id, and waits
       // until that tab has finished loading. It listens for tabs.onUpdated before acting,
-      // so a page that loads at once is not missed. captureVisibleTab fails on a tab that
-      // is still loading ("Cannot access contents of the page").
+      // so a page that loads at once is not missed, and it takes a "complete" only after a
+      // "loading" seen while listening, so a late "complete" of the tab's previous page
+      // does not count. captureVisibleTab fails on a tab that is still loading
+      // ("Cannot access contents of the page").
       async function runAndWaitForTab(api, action, { timeout = 30000 } = {}) {
+        const loading = new Set();
         const completed = new Set();
         let tabId, onLoaded, timerId;
         const onUpdated = (id, changeInfo) => {
-          if (changeInfo.status !== "complete") return;
+          if (changeInfo.status === "loading") loading.add(id);
+          if (changeInfo.status !== "complete" || !loading.has(id)) return;
           completed.add(id);
           if (id === tabId) onLoaded();
         };
@@ -189,6 +193,8 @@
               timeout,
             );
           });
+          // Not awaited when the action fails: keep that from being an unhandled rejection.
+          loaded.catch(() => {});
           tabId = await action();
           if (!completed.has(tabId)) await loaded;
         } finally {
