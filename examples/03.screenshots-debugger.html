@@ -123,8 +123,15 @@
           await api.debugger.sendCommand(target, "Page.enable");
           for (const url of urls) {
 
-            await api.debugger.sendCommand(target, "Page.navigate", { url });
-            await api.debugger.$once(target, "Page.loadEventFired");
+            // Listens for the load event before navigating: a fast page can fire it
+            // before Page.navigate returns.
+            await api.debugger.sendCommandAndWait(
+              target,
+              "Page.navigate",
+              { url },
+              "Page.loadEventFired",
+              { timeout: 30000 },
+            );
             await new Promise(resolve => setTimeout(resolve, 300));
 
             const { data } = await api.debugger.sendCommand(
