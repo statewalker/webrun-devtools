@@ -145,11 +145,17 @@
             const tab = win.tabs[0];
             // console.log('A tab created', tab);
 
+            let lastCapture = 0;
             for (const url of urls) {
-              await api.tabs.update(tab.id, { url, active: true });
+              await runAndWaitForTab(api, async () => {
+                await api.tabs.update(tab.id, { url, active: true });
+                return tab.id;
+              });
               // MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND = 2
               // See https://developer.chrome.com/docs/extensions/reference/tabs/#property-MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND
-              await new Promise(resolve => setTimeout(resolve, 600));
+              const wait = lastCapture + 550 - Date.now();
+              if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
+              lastCapture = Date.now();
               await makeScreenshot(api, win.id, url);
             }
           } finally {
@@ -159,6 +165,41 @@
           }
         } finally{
           await api.close();
+        }
+      }
+
+      // Runs `action`, which opens or navigates a tab and returns the tab's id, and waits
+      // until that tab has finished loading. It listens for tabs.onUpdated before acting,
+      // so a page that loads at once is not missed, and it takes a "complete" only after a
+      // "loading" seen while listening, so a late "complete" of the tab's previous page
+      // does not count. captureVisibleTab fails on a tab that is still loading
+      // ("Cannot access contents of the page").
+      async function runAndWaitForTab(api, action, { timeout = 30000 } = {}) {
+        const loading = new Set();
+        const completed = new Set();
+        let tabId, onLoaded, timerId;
+        const onUpdated = (id, changeInfo) => {
+          if (changeInfo.status === "loading") loading.add(id);
+          if (changeInfo.status !== "complete" || !loading.has(id)) return;
+          completed.add(id);
+          if (id === tabId) onLoaded();
+        };
+        await api.tabs.onUpdated.addListener(onUpdated);
+        try {
+          const loaded = new Promise((resolve, reject) => {
+            onLoaded = resolve;
+            timerId = setTimeout(
+              () => reject(new Error(`The tab did not finish loading in ${timeout} ms.`)),
+              timeout,
+            );
+          });
+          // Not awaited when the action fails: keep that from being an unhandled rejection.
+          loaded.catch(() => {});
+          tabId = await action();
+          if (!completed.has(tabId)) await loaded;
+        } finally {
+          clearTimeout(timerId);
+          await api.tabs.onUpdated.removeListener(onUpdated);
         }
       }
 
