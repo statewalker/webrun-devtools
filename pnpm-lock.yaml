@@ -233,8 +233,8 @@ packages:
     peerDependencies:
       eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
 
-  '@eslint-community/regexpp@4.12.3':
-    resolution: {integrity: sha512-R76UKbvsqI68DJJVTVyqFKqU98CN4+B+acxNfEA2IFarSzP0SjtKf/3+fFiXzTyv5Fj3PxLkGHe2wnVWWMxobQ==}
+  '@eslint-community/regexpp@4.12.4':
+    resolution: {integrity: sha512-1qH3WeISXHFS8P3QI0lntHlMrlfTh1OarxlRbPNDEkSCqoyXC3apBE7MDyRKOL8HpuW48aQtff30wvEFww/4ww==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
 
   '@eslint/config-array@0.23.6':
@@ -1374,7 +1374,7 @@ snapshots:
       eslint: 10.12.0
       eslint-visitor-keys: 3.4.3
 
-  '@eslint-community/regexpp@4.12.3': {}
+  '@eslint-community/regexpp@4.12.4': {}
 
   '@eslint/config-array@0.23.6':
     dependencies:
@@ -1695,7 +1695,7 @@ snapshots:
   eslint@10.12.0:
     dependencies:
       '@eslint-community/eslint-utils': 4.10.1(eslint@10.12.0)
-      '@eslint-community/regexpp': 4.12.3
+      '@eslint-community/regexpp': 4.12.4
       '@eslint/config-array': 0.23.6
       '@eslint/config-helpers': 0.7.0
       '@eslint/core': 1.2.1
